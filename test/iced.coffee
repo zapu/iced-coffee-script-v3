@@ -966,3 +966,11 @@ atest "await in try block 2", (test_cb) ->
   ok glob_err instanceof Error, "error was caught"
   eq glob_err?.message, "error_func error", "it was the right error"
   test_cb true, null
+
+atest "await expression errors", (cb) ->
+  # forgetting `,` between `err` and `result` makes it a function
+  # call, which is invalid iced slot. make sure the error mentions
+  # that.
+  code = "await foo defer err result"
+  throws (-> CoffeeScript.compile code), /function call cannot be a slot/
+  cb true, {}

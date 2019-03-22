@@ -915,6 +915,8 @@ exports.Call = class Call extends Base
       answer = answer.concat fun
     answer = answer.concat @makeCode(".apply(#{ref}, "), splatArgs, @makeCode(")")
 
+  icedToSlot : () -> @error "function call cannot be a slot for defer"
+
 #### Super
 
 # Takes care of converting `super()` calls into calls against the prototype's
