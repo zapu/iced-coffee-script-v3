@@ -395,6 +395,7 @@ runTests = (CoffeeScript) ->
       error: err
 
   asyncTests = []
+  asyncTestsDone = 0
 
   # An async testing primitive
   global.atest = (description, fn) ->
@@ -403,6 +404,7 @@ runTests = (CoffeeScript) ->
     try
       fn.call fn, (ok, e) =>
         asyncTests.splice asyncTests.indexOf(description), 1
+        asyncTestsDone += 1
         if ok
           ++passedTests
         else
@@ -429,7 +431,7 @@ runTests = (CoffeeScript) ->
   # If a stacktrace is available, output the compiled function source.
   process.on 'exit', ->
     time = ((Date.now() - startTime) / 1000).toFixed(2)
-    message = "passed #{passedTests} tests in #{time} seconds#{reset}"
+    message = "passed #{passedTests} (incl. #{asyncTestsDone} async) tests in #{time} seconds#{reset}"
     # Iced additions: remember to check asyncTests array.
     return log(message, green) unless failures.length or asyncTests.length
     log "failed #{(failures.length + asyncTests.length)} and #{message}", red
