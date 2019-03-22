@@ -934,3 +934,35 @@ atest "overused deferral error message 3", (test_cb) ->
     await foo defer()
 
   anon_func()
+
+atest "await in try block", (test_cb) ->
+  foo_a = () -> throw new Error "test error"
+  foo_b = (cb) -> throw new Error "unexpected error - reached foo_b"
+  glob_err = null
+  foo = (f, g, cb) ->
+    try
+      f()
+      await g defer x
+    catch err
+      glob_err = err
+    cb(2)
+  await foo foo_a, foo_b, defer ret
+  eq ret, 2, "foo came back with right value"
+  ok glob_err instanceof Error, "error caught"
+  eq glob_err?.message, "test error", "caught right error"
+  test_cb true, null
+
+atest "await in try block 2", (test_cb) ->
+  error_func = (cb) -> throw new Error "error_func error"
+  glob_err = null
+  foo = (cb) ->
+    try
+      await error_func defer x
+    catch err
+      glob_err = err
+    cb 1
+  await foo defer ret
+  eq ret, 1, "foo came back with right value"
+  ok glob_err instanceof Error, "error was caught"
+  eq glob_err?.message, "error_func error", "it was the right error"
+  test_cb true, null
