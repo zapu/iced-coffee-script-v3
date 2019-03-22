@@ -379,6 +379,47 @@ runTests = (CoffeeScript) ->
         description: description if description?
         source: fn.toString() if fn.toString?
 
+  # ----
+  # Begin Iced additions
+
+  # "On Error Resume Next"
+  # This is needed, because otherwise testing is stopped after first
+  # failed async test.
+  process.removeAllListeners 'uncaughtException'
+  process.on 'uncaughtException', (err) ->
+    console.log "Caught exception: #{err}"
+    failures.push
+      error: err
+
+  asyncTests = []
+
+  # An async testing primitive
+  global.atest = (description, fn) ->
+    fn.test = { description, currentFile }
+    asyncTests.push description
+    try
+      fn.call fn, (ok, e) =>
+        asyncTests.splice asyncTests.indexOf(description), 1
+        if ok
+          ++passedTests
+        else
+          failures.push
+            filename: currentFile
+            error: new Error()
+            description: description if description?
+            source: fn.toString() if fn.toString?
+    catch e
+      failures.push
+        filename: currentFile
+        error: e
+        description: description if description?
+        source: fn.toString() if fn.toString?
+
+  process.version_num = process.version.match('v([0-9.]+)')[1].split('.').map (x)-> parseInt x
+
+  # End Iced additions
+  # ----
+  
   helpers.extend global, require './test/support/helpers'
 
   # When all the tests have run, collect and print errors.
@@ -386,15 +427,19 @@ runTests = (CoffeeScript) ->
   process.on 'exit', ->
     time = ((Date.now() - startTime) / 1000).toFixed(2)
     message = "passed #{passedTests} tests in #{time} seconds#{reset}"
-    return log(message, green) unless failures.length
-    log "failed #{failures.length} and #{message}", red
+    # Iced additions: remember to check asyncTests array.
+    return log(message, green) unless failures.length or asyncTests.length
+    log "failed #{(failures.length + asyncTests.length)} and #{message}", red
     for fail in failures
       {error, filename, description, source}  = fail
       console.log ''
       log "  #{description}", red if description
       log "  #{error.stack}", red
       console.log "  #{source}" if source
-    return
+    for lost in asyncTests
+      log "  \"#{lost}\" did not come back", red
+    # Iced additions: exit code 1 when there was a failure, for CI.
+    process.exit(if failures.length == 0 and asyncTest.length == 0 then 0 else 1)
 
   # Run every test in the `test` folder, recording failures.
   files = fs.readdirSync 'test'
@@ -417,6 +462,13 @@ runTests = (CoffeeScript) ->
     files.splice files.indexOf('javascript_literals.coffee'), 1
     files.splice files.indexOf('tagged_template_literals.coffee'), 1
 
+  if not global.testingBrowser
+    runtime = 'node'
+  else
+    runtime = 'inline'
+
+  files = [ 'iced.coffee' ]
+
   for file in files when helpers.isCoffee file
     literate = helpers.isLiterate file
     currentFile = filename = path.join 'test', file
@@ -434,7 +486,9 @@ task 'test', 'run the CoffeeScript language test suite', ->
 
 
 task 'test:browser', 'run the test suite against the merged browser script', ->
-  source = fs.readFileSync "docs/v#{majorVersion}/browser-compiler/coffee-script.js", 'utf-8'
+  # ???
+  # source = fs.readFileSync "docs/v#{majorVersion}/browser-compiler/coffee-script.js", 'utf-8'
+  source = fs.readFileSync 'extras/iced-coffee-script.js', 'utf-8'
   result = {}
   global.testingBrowser = yes
   (-> eval source).call result

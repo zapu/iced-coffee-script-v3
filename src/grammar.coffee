@@ -99,6 +99,14 @@ grammar =
     o 'STATEMENT',                              -> new StatementLiteral $1
     o 'Import'
     o 'Export'
+    o 'Await'
+  ]
+
+  # IcedCoffeeScript additions
+  # Awaits can either wrap blocks or expressions, but can't be nested
+  Await: [
+    o 'AWAIT Block',                            -> new Await $2
+    o 'AWAIT Expression',                       -> new Await Block.wrap [ $2 ]
   ]
 
   # All the different types of expressions in our language. The basic unit of
@@ -119,6 +127,7 @@ grammar =
     o 'Class'
     o 'Throw'
     o 'Yield'
+    o 'Defer'
   ]
 
   Yield: [
@@ -305,12 +314,18 @@ grammar =
   # The general group of accessors into an object, by property, by prototype
   # or by array index or slice.
   Accessor: [
+    o '.  Defer',                               -> new Access $2.setCustom()
     o '.  Property',                            -> new Access $2
     o '?. Property',                            -> new Access $2, 'soak'
     o ':: Property',                            -> [LOC(1)(new Access new PropertyName('prototype')), LOC(2)(new Access $2)]
     o '?:: Property',                           -> [LOC(1)(new Access new PropertyName('prototype'), 'soak'), LOC(2)(new Access $2)]
     o '::',                                     -> new Access new PropertyName 'prototype'
     o 'Index'
+  ]
+
+  # IcedCoffeeScript additions
+  Defer : [
+    o 'DEFER Arguments',                        -> new Defer $2, yylineno
   ]
 
   # Indexing into an object or array using bracket notation.
@@ -727,6 +742,7 @@ operators = [
   ['right',     'FORIN', 'FOROF', 'FORFROM', 'BY', 'WHEN']
   ['right',     'IF', 'ELSE', 'FOR', 'WHILE', 'UNTIL', 'LOOP', 'SUPER', 'CLASS', 'IMPORT', 'EXPORT']
   ['left',      'POST_IF']
+  ['right',     'AWAIT']
 ]
 
 # Wrapping Up

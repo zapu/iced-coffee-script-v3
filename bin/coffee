@@ -3,10 +3,11 @@
 var path = require('path');
 var fs   = require('fs');
 
+// TODO: FIX COFFEE COMMAND LOOKING FOR COFFEESCRIPT
 var potentialPaths = [
-  path.join(process.cwd(), 'node_modules/coffeescript/lib/coffeescript'),
-  path.join(process.cwd(), 'node_modules/coffeescript/lib/coffee-script'),
-  path.join(process.cwd(), 'node_modules/coffee-script/lib/coffee-script'),
+  // path.join(process.cwd(), 'node_modules/coffeescript/lib/coffeescript'),
+  // path.join(process.cwd(), 'node_modules/coffeescript/lib/coffee-script'),
+  // path.join(process.cwd(), 'node_modules/coffee-script/lib/coffee-script'),
   path.join(__dirname, '../lib/coffee-script')
 ];
 

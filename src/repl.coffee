@@ -4,10 +4,20 @@ vm = require 'vm'
 nodeREPL = require 'repl'
 CoffeeScript = require './coffee-script'
 {merge, updateSyntaxError} = require './helpers'
+iced = require 'iced-runtime-3'
+
+{Await} = require './nodes'
+
+containsAwait = (ast) ->
+  found = no
+  ast.traverseChildren yes, (n) ->
+    if n instanceof Await
+      found = yes
+  found
 
 replDefaults =
-  prompt: 'coffee> ',
-  historyFile: path.join process.env.HOME, '.coffee_history' if process.env.HOME
+  prompt: 'iced> ',
+  historyFile: path.join process.env.HOME, '.iced_history' if process.env.HOME
   historyMaxInputSize: 10240
   eval: (input, context, filename, cb) ->
     # XXX: multiline hack.
@@ -22,6 +32,10 @@ replDefaults =
     # Require AST nodes to do some AST manipulation.
     {Block, Assign, Value, Literal} = require './nodes'
 
+    # iced runtime in place for iced features....
+    context.iced = iced
+    context[iced.const.k_noop] = () ->
+
     try
       # Tokenize the clean input.
       tokens = CoffeeScript.tokens input
@@ -32,9 +46,10 @@ replDefaults =
       # Generate the AST of the tokens.
       ast = CoffeeScript.nodes tokens
       # Add assignment to `_` variable to force the input to be an expression.
-      ast = new Block [
-        new Assign (new Value new Literal '__'), ast, '='
-      ]
+      if not containsAwait ast
+        ast = new Block [
+          new Assign (new Value new Literal '_'), ast, '='
+        ]
       js = ast.compile {bare: yes, locals: Object.keys(context), referencedVars}
       cb null, runInContext js, context, filename
     catch err

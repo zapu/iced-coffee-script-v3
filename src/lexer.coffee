@@ -142,6 +142,10 @@ exports.Lexer = class Lexer
       else
         'IDENTIFIER'
 
+    # Iced addition
+    if id is 'defer' and not colon
+      tag = 'IDENTIFIER'
+
     if tag is 'IDENTIFIER' and (id in JS_KEYWORDS or id in COFFEE_KEYWORDS) and
        not (@exportSpecifierList and id in COFFEE_KEYWORDS)
       tag = id.toUpperCase()
@@ -901,6 +905,9 @@ COFFEE_KEYWORDS = [
   'then', 'unless', 'until', 'loop', 'of', 'by', 'when'
 ]
 
+# IcedCoffeeScript additions
+COFFEE_KEYWORDS = COFFEE_KEYWORDS.concat [ 'await', 'defer' ]
+
 COFFEE_ALIAS_MAP =
   and  : '&&'
   or   : '||'
@@ -1097,3 +1104,6 @@ INDENTABLE_CLOSERS = [')', '}', ']']
 UNFINISHED = ['\\', '.', '?.', '?::', 'UNARY', 'MATH', 'UNARY_MATH', '+', '-',
            '**', 'SHIFT', 'RELATION', 'COMPARE', '&', '^', '|', '&&', '||',
            'BIN?', 'THROW', 'EXTENDS']
+
+# IcedCoffeeScript addition
+CALLABLE.push 'DEFER'

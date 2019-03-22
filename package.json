@@ -1,14 +1,14 @@
 {
-  "name": "coffee-script",
-  "description": "Unfancy JavaScript",
+  "name": "iced-coffee-script-3",
+  "description": "IcedCoffeeScript",
   "keywords": [
     "javascript",
     "language",
     "coffeescript",
     "compiler"
   ],
-  "author": "Jeremy Ashkenas",
-  "version": "1.12.8",
+  "author": "Jeremy Ashkenas + Maxwell Krohn + Michał Zochniak",
+  "version": "111.1.1",
   "license": "MIT",
   "engines": {
     "node": ">=0.8.0"
@@ -18,8 +18,8 @@
   },
   "main": "./lib/coffee-script/coffee-script",
   "bin": {
-    "coffee": "./bin/coffee",
-    "cake": "./bin/cake"
+    "iced3": "./bin/coffee",
+    "icake3": "./bin/cake"
   },
   "files": [
     "bin",
@@ -28,12 +28,11 @@
     "repl.js"
   ],
   "scripts": {
-    "postinstall": "node --eval 'if (require(\"./package.json\").name === \"coffee-script\") { var red, yellow, cyan, reset; red = yellow = cyan = reset = \"\"; if (!process.env.NODE_DISABLE_COLORS) { red = \"\\x1b[31m\"; yellow = \"\\x1b[33m\"; cyan = \"\\x1b[36m\"; reset = \"\\x1b[0m\"; } console.warn(red + \"CoffeeScript has moved!\" + reset + \" Please update references to \" + yellow + \"\\\"coffee-script\\\"\" + reset + \" to use \" + yellow + \"\\\"coffeescript\\\"\" + reset + \" (no hyphen) instead.\"); console.warn(\"Also, a new major version has been released under the \" + yellow + \"coffeescript\" + reset + \" name on NPM. This new release targets modern JavaScript, with minimal breaking changes. Learn more at \" + cyan + \"http://coffeescript.org\" + reset + \".\"); console.warn(\"\"); }'",
     "test": "node ./bin/cake test",
     "test-harmony": "node --harmony ./bin/cake test"
   },
-  "homepage": "http://coffeescript.org",
-  "bugs": "https://github.com/jashkenas/coffeescript/issues",
+  "homepage": "http://maxtaco.github.io/coffee-script",
+  "bugs": "https://github.com/maxtaco/coffee-script/issues",
   "repository": {
     "type": "git",
     "url": "git://github.com/jashkenas/coffeescript.git"
@@ -45,5 +44,8 @@
     "jison": "~0.4.18",
     "markdown-it": "~8.4.0",
     "underscore": "~1.8.3"
+  },
+  "dependencies": {
+    "iced-runtime-3": ">=3.0.4"
   }
 }

@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+
+// Bootstrap compiler from `src/` using working compiler from
+// `lib/coffee-script` and run it's "command".
+
+const path = require('path');
+
+// source, "dev", version that we will be bootstrapping
+const coffeeSrc = path.join(__dirname, '../src')
+// using library, "prod", version that's already compiled
+const coffeeLib = path.join(__dirname, '../lib/coffee-script')
+
+// Register prod version
+const prod = require(coffeeLib + "/coffee-script")
+prod.register()
+
+// Inject prod parser into dev version, we are not building it dynamically.
+require.cache[coffeeSrc + "/parser.js"] = require.cache[coffeeLib + "/parser.js"]
+
+// To in-memory build source version.
+const coffee = require(coffeeSrc + "/coffee-script")
+const command = require(coffeeSrc + "/command")
+
+// Registering should overwrite "prod" version extensions with "dev" versions.
+coffee.register()
+
+command.run()
