@@ -516,6 +516,46 @@ exports.PassthroughLiteral = class PassthroughLiteral extends Literal
 exports.IdentifierLiteral = class IdentifierLiteral extends Literal
   isAssignable: YES
 
+  #------
+  # Begin Iced Additions...
+
+  compileNode: (o) ->
+    if @value is 'arguments' and o.scope.icedUseArguments
+      # TODO: Find a better way to supply icedArgumentsVar instead
+      # of this scope madness.
+
+      # Observe:
+
+      # bar = function(i, cb) {               # ~ PARENT 2
+      #     var __iced_it, __iced_passed_deferral, _arguments;
+      #     _arguments = arguments;
+      #     __iced_passed_deferral = iced.findDeferral(arguments);
+      #     __iced_it = (function(_this) {    # ~ PARENT 1
+      #       return function*() {
+      #           # ~ WE ARE HERE ~
+
+      @value = o.scope.parent.parent.icedArgumentsVar
+
+    code = if @value is 'this'
+      if o.scope.method?.bound then o.scope.method.context else @value
+    else if @value.reserved
+      "\"#{@value}\""
+    else
+      @value
+    answer = if @isStatement() then "#{@tab}#{code};" else code
+    [@makeCode answer]
+
+  icedWalkAst: (o) ->
+    # Check if any of the code references `arguments` variable
+    # if we also have await construct. Arguments array will be
+    # stored in temporary variable at the beginning of function.
+    if @value is 'arguments' and o.awaitInFunc
+      o.foundArguments = true
+    this
+
+  # End Iced Additions...
+  #------
+
 exports.PropertyName = class PropertyName extends Literal
   isAssignable: YES
 
@@ -1920,7 +1960,7 @@ exports.Code = class Code extends Base
     body.push call
 
     # return null;
-    # we don't want to return result of __it.next() which is typically 
+    # we don't want to return result of __it.next() which is typically
     # something like `{ value: undefined, done: false }`.
     body.push new NullLiteral
 

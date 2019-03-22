@@ -14,12 +14,15 @@ unless process.env.NODE_DISABLE_COLORS
   reset = '\x1B[0m'
 
 # Built file header.
+# TODO? Mainly used for the browser build. Do we need this?
 header = """
   /**
-   * CoffeeScript Compiler v#{CoffeeScript.VERSION}
-   * http://coffeescript.org
+   * IcedCoffeeScript Compiler v#{CoffeeScript.ICED_VERSION}
+   * (based on CoffeeScript v#{CoffeeScript.COFFEE_VERSION}).
    *
-   * Copyright 2011, Jeremy Ashkenas
+   * http://iced-coffee-script.github.io/iced-coffee-script
+   *
+   * Copyright 2011-2019, Jeremy Ashkenas, Maxwell Krohn, Michał Zochniak
    * Released under the MIT License
    */
 """
@@ -387,7 +390,7 @@ runTests = (CoffeeScript) ->
   # failed async test.
   process.removeAllListeners 'uncaughtException'
   process.on 'uncaughtException', (err) ->
-    console.log "Caught exception: #{err}"
+    console.log "Caught (async) exception: #{err}"
     failures.push
       error: err
 
@@ -467,7 +470,7 @@ runTests = (CoffeeScript) ->
   else
     runtime = 'inline'
 
-  files = [ 'iced.coffee' ]
+  #files = [ 'iced.coffee', 'iced_advanced.coffee' ]
 
   for file in files when helpers.isCoffee file
     literate = helpers.isLiterate file
@@ -482,8 +485,6 @@ runTests = (CoffeeScript) ->
 
 task 'test', 'run the CoffeeScript language test suite', ->
   testResults = runTests CoffeeScript
-  process.exit 1 unless testResults
-
 
 task 'test:browser', 'run the test suite against the merged browser script', ->
   # ???
@@ -493,4 +494,4 @@ task 'test:browser', 'run the test suite against the merged browser script', ->
   global.testingBrowser = yes
   (-> eval source).call result
   testResults = runTests result.CoffeeScript
-  process.exit 1 unless testResults
+

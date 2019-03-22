@@ -33,7 +33,7 @@ icedTransform = (x, options) -> x.icedTransform options
 
 exports.ICED_PATCH_VERSION = 1
 exports.ICED_VERSION = do ->
-    v = exports.VERSION.split('.').map (x)-> parseInt x
+    v = exports.COFFEE_VERSION.split('.').map (x)-> parseInt x
     [ v[0] * 100 + v[1], v[2], exports.ICED_PATCH_VERSION ].join('.')
 
 # Function that allows for btoa in both nodejs and the browser.

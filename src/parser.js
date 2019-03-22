@@ -4,3 +4,5 @@
 // cache in place of this module. This way built lib/parser.js can be used
 // while running rest of the compiler modules dynamically, from src/*.coffee
 // source.
+
+module.exports = "dummy file"

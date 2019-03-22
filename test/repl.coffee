@@ -46,8 +46,8 @@ testRepl 'reads history file', (input, output, repl) ->
   input.emitLine repl.rli.history[0]
   eq '3', output.lastWrite()
 
-testRepl "starts with coffee prompt", (input, output) ->
-  eq 'coffee> ', output.lastWrite(0)
+testRepl "starts with iced prompt", (input, output) ->
+  eq 'iced3> ', output.lastWrite(0)
 
 testRepl "writes eval to output", (input, output) ->
   input.emitLine '1+1'
@@ -77,14 +77,14 @@ testRepl "empty command evaluates to undefined", (input, output) ->
 
 testRepl "ctrl-v toggles multiline prompt", (input, output) ->
   input.emit 'keypress', null, ctrlV
-  eq '------> ', output.lastWrite(0)
+  eq '-----> ', output.lastWrite(0)
   input.emit 'keypress', null, ctrlV
-  eq 'coffee> ', output.lastWrite(0)
+  eq 'iced3> ', output.lastWrite(0)
 
 testRepl "multiline continuation changes prompt", (input, output) ->
   input.emit 'keypress', null, ctrlV
   input.emitLine ''
-  eq '....... ', output.lastWrite(0)
+  eq '...... ', output.lastWrite(0)
 
 testRepl "evaluates multiline", (input, output) ->
   # Stubs. Could assert on their use.

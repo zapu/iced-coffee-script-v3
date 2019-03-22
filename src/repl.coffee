@@ -16,7 +16,7 @@ containsAwait = (ast) ->
   found
 
 replDefaults =
-  prompt: 'iced> ',
+  prompt: 'iced3> ',
   historyFile: path.join process.env.HOME, '.iced_history' if process.env.HOME
   historyMaxInputSize: 10240
   eval: (input, context, filename, cb) ->

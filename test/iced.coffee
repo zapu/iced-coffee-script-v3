@@ -906,6 +906,8 @@ wrap_error = (test_cb, predicate) ->
       test_cb false, {}
 
 atest "overused deferral error message", (test_cb) ->
+  # "<anonymous>" because the call which triggers overused deferral orginates
+  # from `(test_cb) ->` func - this one that the comment is in.
   wrap_error test_cb, (msg) ->
     msg.indexOf('test/iced.coffee:') != -1 and msg.indexOf('<anonymous>') != -1
 
@@ -925,7 +927,7 @@ atest "overused deferral error message 2", (test_cb) ->
 
 atest "overused deferral error message 3", (test_cb) ->
   wrap_error test_cb, (msg) ->
-    msg.indexOf('test/iced.coffee:') != -1 and msg.indexOf('<anonymous: anon_func>') != -1
+    msg.indexOf('test/iced.coffee:') != -1 and msg.indexOf('<anon_func>') != -1
 
   anon_func = ->
     foo = (cb) -> cb(); cb()
