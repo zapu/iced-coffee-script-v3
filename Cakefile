@@ -17,8 +17,7 @@ unless process.env.NODE_DISABLE_COLORS
 # TODO? Mainly used for the browser build. Do we need this?
 header = """
   /**
-   * IcedCoffeeScript Compiler v#{CoffeeScript.ICED_VERSION}
-   * (based on CoffeeScript v#{CoffeeScript.COFFEE_VERSION}).
+   * IcedCoffeeScript Compiler v#{CoffeeScript.ICED_VERSION} (based on CoffeeScript v#{CoffeeScript.COFFEE_VERSION}).
    *
    * http://iced-coffee-script.github.io/iced-coffee-script
    *
@@ -124,8 +123,10 @@ task 'build:browser', 'merge the built scripts into a single file for use in a b
   require['../../package.json'] = (function() {
     return #{fs.readFileSync "./package.json"};
   })();
+
+  require['iced-runtime-3'] = #{fs.readFileSync "lib/coffee-script/inline-runtime.js"};
   """
-  for name in ['helpers', 'rewriter', 'lexer', 'parser', 'scope', 'nodes', 'sourcemap', 'coffee-script', 'browser']
+  for name in ['helpers', 'rewriter', 'lexer', 'parser', 'scope', 'nodes', 'sourcemap', 'coffee-script', 'browser', 'inline-runtime-str']
     code += """
       require['./#{name}'] = (function() {
         var exports = {}, module = {exports: exports};
@@ -157,7 +158,7 @@ task 'build:browser', 'merge the built scripts into a single file for use in a b
       ]
   outputFolder = "docs/v#{majorVersion}/browser-compiler"
   fs.mkdirSync outputFolder unless fs.existsSync outputFolder
-  fs.writeFileSync "#{outputFolder}/coffee-script.js", header + '\n' + code
+  fs.writeFileSync "#{outputFolder}/iced-coffee-script.js", header + '\n' + code
 
 task 'build:browser:full', 'merge the built scripts into a single file for use in a browser, and test it', ->
   invoke 'build:browser'
@@ -170,6 +171,30 @@ task 'build:watch', 'watch and continually rebuild the CoffeeScript compiler, ru
 task 'build:watch:harmony', 'watch and continually rebuild the CoffeeScript compiler, running harmony tests on each build', ->
   watchAndBuildAndTest yes
 
+# Iced addition - inline iced-runtime-3
+task 'build:inline-runtime', 'build the inline iced3 runtime', ->
+  runtime_dir = path.dirname require.resolve 'iced-runtime-3'
+  code = ''
+  for name in ['const', 'runtime', 'library', 'main']
+    code += """
+      require['./#{name}'] = (function() {
+        var exports = {}, module = {exports: exports};
+        #{fs.readFileSync "#{runtime_dir}/#{name}.js"}
+        return module.exports;
+      })();
+
+    """
+  code = """
+    (function() {
+      function require(path){ return require[path]; }
+      #{code}
+      return require['./main'];
+    }());
+
+  """
+  fs.writeFileSync 'lib/coffee-script/inline-runtime.js', header + '\n' + code
+  fs.writeFileSync 'lib/coffee-script/inline-runtime-str.js', "module.exports = #{helpers.strToJavascript(code)}"
+  console.log 'built inline iced3 runtime'
 
 buildDocs = (watch = no) ->
   # Constants
@@ -472,14 +497,14 @@ runTests = (CoffeeScript) ->
   else
     runtime = 'inline'
 
-  #files = [ 'iced.coffee', 'iced_advanced.coffee' ]
+  # files = [ 'iced.coffee', 'iced_advanced.coffee' ]
 
   for file in files when helpers.isCoffee file
     literate = helpers.isLiterate file
     currentFile = filename = path.join 'test', file
     code = fs.readFileSync filename
     try
-      CoffeeScript.run code.toString(), {filename, literate}
+      CoffeeScript.run code.toString(), { filename, literate, runtime }
     catch error
       failures.push {filename, error}
   return !failures.length
@@ -489,9 +514,7 @@ task 'test', 'run the CoffeeScript language test suite', ->
   testResults = runTests CoffeeScript
 
 task 'test:browser', 'run the test suite against the merged browser script', ->
-  # ???
-  # source = fs.readFileSync "docs/v#{majorVersion}/browser-compiler/coffee-script.js", 'utf-8'
-  source = fs.readFileSync 'extras/iced-coffee-script.js', 'utf-8'
+  source = fs.readFileSync "docs/v#{majorVersion}/browser-compiler/iced-coffee-script.js", 'utf-8'
   result = {}
   global.testingBrowser = yes
   (-> eval source).call result
