@@ -39,7 +39,7 @@ exports.ICED_VERSION = do ->
 # Function that allows for btoa in both nodejs and the browser.
 base64encode = (src) -> switch
   when typeof Buffer is 'function'
-    new Buffer(src).toString('base64')
+    Buffer.from(src).toString('base64')
   when typeof btoa is 'function'
     # The contents of a `<script>` block are encoded via UTF-16, so if any extended
     # characters are used in the block, btoa will fail as it maxes out at UTF-8.
