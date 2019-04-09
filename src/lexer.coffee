@@ -933,6 +933,10 @@ RESERVED = [
 
 STRICT_PROSCRIBED = ['arguments', 'eval']
 
+# Iced addition
+exports.BUILTIN_ICED_VER_LITERAL = BUILTIN_ICED_VER_LITERAL = '__builtin_iced_version'
+STRICT_PROSCRIBED.push BUILTIN_ICED_VER_LITERAL
+
 # The superset of both JavaScript keywords and reserved words, none of which may
 # be used as identifiers or properties.
 exports.JS_FORBIDDEN = JS_KEYWORDS.concat(RESERVED).concat(STRICT_PROSCRIBED)

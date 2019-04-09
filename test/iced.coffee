@@ -967,10 +967,34 @@ atest "await in try block 2", (test_cb) ->
   eq glob_err?.message, "error_func error", "it was the right error"
   test_cb true, null
 
-atest "await expression errors", (cb) ->
+test "await expression errors", ->
   # forgetting `,` between `err` and `result` makes it a function
   # call, which is invalid iced slot. make sure the error mentions
   # that.
   code = "await foo defer err result"
   throws (-> CoffeeScript.compile code), /function call cannot be a slot/
-  cb true, {}
+
+test "builtin version literal", ->
+  ver = __builtin_iced_version
+  eq ver, "iced3"
+  eq __builtin_iced_version, "iced3"
+
+test "builtin unassignable", ->
+  cantCompile "__builtin_iced_version = 1"
+
+atest "non-builtin assignable", (cb) ->
+  eval CoffeeScript.compile """
+__builtin_iced_version_x = 1
+cb true, {}
+  """, { bare : true }
+
+test "non-existing builtin fallback", ->
+  # Method to check for version built-in. Pretend __builtin_iced_version_x is
+  # another built-in that some future iced version will support.
+  try ver1 = __builtin_iced_version_x
+  catch then ver1 = "unknown"
+  eq ver1, "unknown"
+
+  try ver2 = __builtin_iced_version
+  catch then ver2 = "unknown"
+  eq ver2, "iced3"

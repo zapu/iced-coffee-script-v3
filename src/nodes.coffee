@@ -6,7 +6,7 @@
 Error.stackTraceLimit = Infinity
 
 {Scope} = require './scope'
-{isUnassignable, JS_FORBIDDEN} = require './lexer'
+{isUnassignable, JS_FORBIDDEN, BUILTIN_ICED_VER_LITERAL} = require './lexer'
 
 iced = require 'iced-runtime-3'
 
@@ -540,6 +540,10 @@ exports.IdentifierLiteral = class IdentifierLiteral extends Literal
       if o.scope.method?.bound then o.scope.method.context else @value
     else if @value.reserved
       "\"#{@value}\""
+    else if @value is BUILTIN_ICED_VER_LITERAL
+      # Using this "magic identifier" programs can test whether
+      # they are compiled using Iced3 compiler.
+      "\"iced3\""
     else
       @value
     answer = if @isStatement() then "#{@tab}#{code};" else code
