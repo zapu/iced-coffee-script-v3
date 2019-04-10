@@ -616,19 +616,15 @@ f a, f() b, f? c, h[0] d etc.</p>
               <p>Implicit call taking an implicit indented object as first argument.</p>
 <pre><code>f
   a: b
-  c: d
-</code></pre><p>and</p>
+  c: d</code></pre><p>and</p>
 <pre><code>f
   <span class="hljs-number">1</span>
   a: b
-  b: c
-</code></pre><p>Don’t accept implicit calls of this type, when on the same line
+  b: c</code></pre><p>Don’t accept implicit calls of this type, when on the same line
 as the control structures below as that may misinterpret constructs like:</p>
 <pre><code><span class="hljs-keyword">if</span> f
-   a: <span class="hljs-number">1</span>
-</code></pre><p>as</p>
-<pre><code><span class="hljs-keyword">if</span> f(a: <span class="hljs-number">1</span>)
-</code></pre><p>which is probably always unintended.
+   a: <span class="hljs-number">1</span></code></pre><p>as</p>
+<pre><code><span class="hljs-keyword">if</span> f(a: <span class="hljs-number">1</span>)</code></pre><p>which is probably always unintended.
 Furthermore don’t allow this in literal arrays, as
 that creates grammatical ambiguities.</p>
 
@@ -730,12 +726,10 @@ like e.g.:</p>
   a
 .g b, <span class="hljs-function">-&gt;</span>
   c
-.h a
-</code></pre><p>and also</p>
+.h a</code></pre><p>and also</p>
 <pre><code>f a
 .g b
-.h a
-</code></pre>
+.h a</code></pre>
             </div>
             
         </li>
@@ -832,10 +826,8 @@ This is used for trailing commas and calls, like:</p>
 <pre><code>x =
     a: b,
     c: d,
-e = <span class="hljs-number">2</span>
-</code></pre><p>and</p>
-<pre><code>f a, b: c, d: e, f, g: h: i, j
-</code></pre>
+e = <span class="hljs-number">2</span></code></pre><p>and</p>
+<pre><code>f a, b: c, d: e, f, g: h: i, j</code></pre>
             </div>
             
             <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> tag <span class="hljs-keyword">is</span> <span class="hljs-string">','</span> <span class="hljs-keyword">and</span> <span class="hljs-keyword">not</span> @looksObjectish(i + <span class="hljs-number">1</span>) <span class="hljs-keyword">and</span> inImplicitObject() <span class="hljs-keyword">and</span>
@@ -1252,6 +1244,23 @@ SINGLE_CLOSERS   = [<span class="hljs-string">'TERMINATOR'</span>, <span class="
             </div>
             
             <div class="content"><div class='highlight'><pre>CALL_CLOSERS     = [<span class="hljs-string">'.'</span>, <span class="hljs-string">'?.'</span>, <span class="hljs-string">'::'</span>, <span class="hljs-string">'?::'</span>]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-53">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-53">&#182;</a>
+              </div>
+              <p>IcedCoffeeScript additions</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>IMPLICIT_FUNC.push <span class="hljs-string">'DEFER'</span>
+IMPLICIT_CALL.push <span class="hljs-string">'DEFER'</span>
+IMPLICIT_END.push <span class="hljs-string">'AWAIT'</span></pre></div></div>
             
         </li>
         

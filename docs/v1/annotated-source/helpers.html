@@ -606,6 +606,27 @@ exports.nameWhitespaceCharacter = <span class="hljs-function"><span class="hljs-
             
         </li>
         
+        
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>Iced addition
+Transforms multiline string to JavaScript string literal, ready to
+emit by the compiler.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>exports.strToJavascript = <span class="hljs-function"><span class="hljs-params">(source)</span> -&gt;</span>
+  lines = source.split(<span class="hljs-string">'\n'</span>).map (line) -&gt; line.replace(<span class="hljs-regexp">/\\/g, '\\\\').replace(/</span><span class="hljs-string">'/g, "\\'</span><span class="hljs-string">")
+  "</span><span class="hljs-string">'#{lines.join('</span>\\n<span class="hljs-string">')}'</span><span class="hljs-string">"
+
+</span></pre></div></div>
+            
+        </li>
+        
     </ul>
   </div>
 </body>
