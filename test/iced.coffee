@@ -365,7 +365,22 @@ atest 'defer + arguments', (cb) ->
     await delay defer()
     arguments[1](arguments[0])
   await bar 10, defer x
-  cb(10 is x, {})
+  eq x, 10
+  cb true, {}
+
+atest 'defer + arguments 2', (cb) ->
+  x = null
+  foo = (a,b,c,cb) ->
+    x = arguments[1]
+    await delay defer()
+    cb null
+  await foo 1, 2, 3, defer()
+  eq x, 2
+  cb x, {}
+
+test 'arguments array without await', ->
+  code = CoffeeScript.compile "fun = -> console.log(arguments)"
+  eq code.indexOf("_arguments"), -1
 
 atest 'for in by + await', (cb) ->
   res = []
@@ -989,7 +1004,7 @@ cb true, {}
   """, { bare : true }
 
 test "non-existing builtin fallback", ->
-  # Method to check for version built-in. Pretend __builtin_iced_version_x is
+  # Methods to check for version built-in. Pretend __builtin_iced_version_x is
   # another built-in that some future iced version will support.
   try ver1 = __builtin_iced_version_x
   catch then ver1 = "unknown"
@@ -998,3 +1013,15 @@ test "non-existing builtin fallback", ->
   try ver2 = __builtin_iced_version
   catch then ver2 = "unknown"
   eq ver2, "iced3"
+
+  ver3 = __builtin_iced_version ? "unknown"
+  eq ver3, "iced3"
+
+  ver4 = __builtin_iced_version_x ? "unknown"
+  eq ver4, "unknown"
+
+  obj = { version : __builtin_iced_version ? "unknown" }
+  eq obj.version, "iced3"
+
+  obj2 = { version : __builtin_iced_version_x ? "unknown" }
+  eq obj2.version, "unknown"

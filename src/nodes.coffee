@@ -550,10 +550,11 @@ exports.IdentifierLiteral = class IdentifierLiteral extends Literal
     [@makeCode answer]
 
   icedWalkAst: (o) ->
+    super o
     # Check if any of the code references `arguments` variable
     # if we also have await construct. Arguments array will be
     # stored in temporary variable at the beginning of function.
-    if @value is 'arguments' and o.awaitInFunc
+    if @value is 'arguments'
       o.foundArguments = true
     this
 
