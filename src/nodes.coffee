@@ -1617,16 +1617,6 @@ exports.Assign = class Assign extends Base
           @value.klass = new Value @variable.base, properties
           @value.name  = name
           @value.variable = @variable
-      else if @variable.base instanceof Literal
-        # Try to pass the variable to value if it's a simple function
-        # assignment, like:
-        #
-        # > foo = (param) -> function_body
-        #
-        # so iced can generate better debug traces, instead of saying
-        # that error was in "<anonymous>". Most functions in coffee
-        # anonymous.
-        @value.variable = @variable
     unless @context
       varBase = @variable.unwrapAll()
       unless varBase.isAssignable()
@@ -1642,9 +1632,13 @@ exports.Assign = class Assign extends Base
           @checkAssignability o, varBase
           o.scope.find varBase.value
 
-    val = @value.compileToFragments o, LEVEL_LIST
     @variable.front = true if isValue and @variable.base instanceof Obj
     compiledName = @variable.compileToFragments o, LEVEL_LIST
+    if @value instanceof Code
+      # Save compiled variable name for icedTraceName
+      @value.varName = fragmentsToText(compiledName).replace('.prototype.', '::')
+
+    val = @value.compileToFragments o, LEVEL_LIST
 
     if @context is 'object'
       if fragmentsToText(compiledName) in JS_FORBIDDEN
@@ -1988,12 +1982,7 @@ exports.Code = class Code extends Base
         break
     @
 
-  icedTraceName : ->
-    parts = []
-    parts.push n if (n = @klass?.base?.value)?
-    parts.push n if (n = @name?.name?.value)?
-    parts.push "<#{n}>" if (n = @variable?.base?.value)?
-    parts.join '.'
+  icedTraceName : -> @varName
 
   # /IcedCoffeeScript Additions
   #----------
@@ -3220,6 +3209,16 @@ LEVEL_ACCESS = 6  # ...[0]
 TAB = '  '
 
 SIMPLENUM = /^[+-]?\d+$/
+
+IDENTIFIER_STR = "[$A-Za-z_\\x7f-\\uffff][$\\w\\x7f-\\uffff]*"
+METHOD_DEF = /// ^
+  (#{IDENTIFIER_STR})
+  (\.prototype)?
+  (?: \.(#{IDENTIFIER_STR})
+    | \[("(?:[^\\"\r\n]|\\.)*"|'(?:[^\\'\r\n]|\\.)*')\]
+    | \[(0x[\da-fA-F]+ | \d*\.?\d+ (?:[eE][+-]?\d+)?)\]
+  )
+$ ///
 
 # Helper Functions
 # ----------------

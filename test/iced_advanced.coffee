@@ -101,7 +101,6 @@ if require?
     ok = false if out[0]
     cb(ok, {})
 
-
 ##----------------------------------------------------------------------
 
   atest "stack walk", (cb) ->
@@ -129,7 +128,6 @@ if require?
     await foo defer()
     cb(check, {})
 
-
 ##----------------------------------------------------------------------
 
   atest "multi", (cb) ->
@@ -146,6 +144,3 @@ if require?
     await rv.wait defer()
     await rv.wait defer()
     cb(true, {})
-
-
-

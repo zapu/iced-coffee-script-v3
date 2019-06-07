@@ -498,6 +498,7 @@ runTests = (CoffeeScript) ->
     runtime = 'inline'
 
   # files = [ 'iced.coffee', 'iced_advanced.coffee' ]
+  # files = [ 'iced_trace_names.coffee' ]
 
   for file in files when helpers.isCoffee file
     literate = helpers.isLiterate file
@@ -519,4 +520,3 @@ task 'test:browser', 'run the test suite against the merged browser script', ->
   global.testingBrowser = yes
   (-> eval source).call result
   testResults = runTests result.CoffeeScript
-
