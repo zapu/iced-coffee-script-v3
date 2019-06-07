@@ -934,7 +934,7 @@ atest "overused deferral error message 2", (test_cb) ->
     msg.indexOf('test/iced.coffee:') != -1 and msg.indexOf('A::b') != -1
 
   class A
-    b: () ->
+    b : () ->
       foo = (cb) -> cb(); cb()
       await foo defer()
 

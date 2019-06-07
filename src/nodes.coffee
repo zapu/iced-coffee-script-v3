@@ -1632,13 +1632,17 @@ exports.Assign = class Assign extends Base
           @checkAssignability o, varBase
           o.scope.find varBase.value
 
-    @variable.front = true if isValue and @variable.base instanceof Obj
-    compiledName = @variable.compileToFragments o, LEVEL_LIST
     if @value instanceof Code
-      # Save compiled variable name for icedTraceName
-      @value.varName = fragmentsToText(compiledName).replace('.prototype.', '::')
+      # Save compiled variable name for icedTraceName.
+      # This has to be ready before @value is compiled. But also
+      # @value has to be compiled before @variable. So we compile
+      # @variable twice, first time here, just to get the name.
+      name = @variable.compileToFragments o, LEVEL_LIST
+      @value.varName = fragmentsToText(name).replace('.prototype.', '::')
 
     val = @value.compileToFragments o, LEVEL_LIST
+    @variable.front = true if isValue and @variable.base instanceof Obj
+    compiledName = @variable.compileToFragments o, LEVEL_LIST
 
     if @context is 'object'
       if fragmentsToText(compiledName) in JS_FORBIDDEN

@@ -22,16 +22,18 @@ test "class methods", ->
   src = """
     class B
       y : ->
+      z = ->
     """
   traces = compileAndGetTraceNames(src)
-  deepEqual traces, ['B::y']
+  deepEqual traces, ['B::y', 'z']
 
   src = """
     exports.B = class C
       y : ->
+      z = ->
     """
   traces = compileAndGetTraceNames(src)
-  deepEqual traces, ['C::y']
+  deepEqual traces, ['C::y', 'z']
 
 test "object method", ->
   src = "exports.x = ->"
