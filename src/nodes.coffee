@@ -1362,6 +1362,10 @@ exports.Class = class Class extends Base
           else if node instanceof Value and node.isObject(true)
             cont = false
             exps[i] = @addProperties node, name, o
+
+          # Preserve class for class private functions for better trace names.
+          if node instanceof Assign and not node.value.static
+            node.value.icedPrivateOfCls = @variable
         child.expressions = exps = flatten exps
       cont and child not instanceof Class
 
@@ -1606,17 +1610,29 @@ exports.Assign = class Assign extends Base
       return @compileSplice       o if @variable.isSplice()
       return @compileConditional  o if @context in ['||=', '&&=', '?=']
       return @compileSpecialMath  o if @context in ['**=', '//=', '%%=']
+
     if @value instanceof Code
+      # Also first pass of trying to create icedTraceName.
       if @value.static
+        # Static method (class A: @func: ->)
         @value.klass = @variable.base
         @value.name  = @variable.properties[0]
         @value.variable = @variable
+        if (klass = @variable.base?.value) and (method = @variable.properties[0]?.name?.value)
+          @value.icedTraceName = "#{klass}::@#{method}"
       else if @variable.properties?.length >= 2
+        # Normal class methods.
         [properties..., prototype, name] = @variable.properties
         if prototype.name?.value is 'prototype'
           @value.klass = new Value @variable.base, properties
           @value.name  = name
           @value.variable = @variable
+          if (klass = @variable.base?.value) and (method = name.name?.value)
+            @value.icedTraceName = "#{klass}::#{method}"
+      else if (kls = @value.icedPrivateOfCls)
+        # Private function of a class (class A: func = ->)
+        if (klass = kls.base?.value) and (method = @variable.base?.value)
+          @value.icedTraceName = "#{klass}::\##{method}"
     unless @context
       varBase = @variable.unwrapAll()
       unless varBase.isAssignable()
@@ -1632,13 +1648,15 @@ exports.Assign = class Assign extends Base
           @checkAssignability o, varBase
           o.scope.find varBase.value
 
-    if @value instanceof Code
-      # Save compiled variable name for icedTraceName.
+    if @value instanceof Code and not @value.icedTraceName
+      # Save compiled variable name for icedTraceName if
+      # wasn't obtained already.
+
       # This has to be ready before @value is compiled. But also
       # @value has to be compiled before @variable. So we compile
       # @variable twice, first time here, just to get the name.
       name = @variable.compileToFragments o, LEVEL_LIST
-      @value.varName = fragmentsToText(name).replace('.prototype.', '::')
+      @value.icedTraceName = fragmentsToText(name)
 
     val = @value.compileToFragments o, LEVEL_LIST
     @variable.front = true if isValue and @variable.base instanceof Obj
@@ -1986,7 +2004,6 @@ exports.Code = class Code extends Base
         break
     @
 
-  icedTraceName : -> @varName
 
   # /IcedCoffeeScript Additions
   #----------
@@ -3042,7 +3059,7 @@ exports.Await = class Await extends Base
       cb_assignment = new Assign cb_lhs, cb_rhs, "object"
       assignments.push cb_assignment
 
-    if n = @icedParentFunc?.icedTraceName()
+    if n = @icedParentFunc?.icedTraceName
       func_lhs = new Value new Literal iced.const.funcname
       func_rhs = new Value new Literal quote_funcname_for_debug n
       func_assignment = new Assign func_lhs, func_rhs, "object"

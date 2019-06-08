@@ -1,12 +1,8 @@
-util = require 'util'
-
 compileAndGetTraceNames = (src) ->
   traces = []
   nodes = CoffeeScript.nodes src, { bare : true }
   nodes.compile()
-  nodes.traverseChildren true, (x) ->
-    if x.icedTraceName
-      traces.push x.icedTraceName()
+  nodes.traverseChildren true, (x) -> traces.push n if n = x.icedTraceName
   traces.filter((x) -> x)
 
 test "nested functions 1", ->
@@ -25,7 +21,7 @@ test "class methods", ->
       z = ->
     """
   traces = compileAndGetTraceNames(src)
-  deepEqual traces, ['B::y', 'z']
+  deepEqual traces, ['B::y', 'B::#z']
 
   src = """
     exports.B = class C
@@ -33,7 +29,7 @@ test "class methods", ->
       z = ->
     """
   traces = compileAndGetTraceNames(src)
-  deepEqual traces, ['C::y', 'z']
+  deepEqual traces, ['C::y', 'C::#z']
 
 test "object method", ->
   src = "exports.x = ->"
