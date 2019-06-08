@@ -1633,6 +1633,9 @@ exports.Assign = class Assign extends Base
         # Private function of a class (class A: func = ->)
         if (klass = kls.base?.value) and (method = @variable.base?.value)
           @value.icedTraceName = "#{klass}::\##{method}"
+      else if @variable.base instanceof IdentifierLiteral and not @variable.properties.length
+        # Simple common case of assignment to a variable
+        @value.icedTraceName = @variable.base.value
     unless @context
       varBase = @variable.unwrapAll()
       unless varBase.isAssignable()
