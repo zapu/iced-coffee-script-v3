@@ -524,7 +524,7 @@ exports.IdentifierLiteral = class IdentifierLiteral extends Literal
       # TODO: Find a better way to supply icedArgumentsVar instead
       # of this scope madness.
 
-      # Observe:
+      # If the generator function is bound:
 
       # bar = function(i, cb) {               # ~ PARENT 2
       #     var __iced_it, __iced_passed_deferral, _arguments;
@@ -534,7 +534,13 @@ exports.IdentifierLiteral = class IdentifierLiteral extends Literal
       #       return function*() {
       #           # ~ WE ARE HERE ~
 
-      @value = o.scope.parent.parent.icedArgumentsVar
+      # When it's not, it's only one parent up.
+
+      @value = o.scope.parent?.icedArgumentsVar
+      if not @value
+        @value = o.scope.parent?.parent?.icedArgumentsVar
+        if not @value
+          throw new Error "Compiler bug: failed to compile `arguments` inside of async func"
 
     code = if @value is 'this'
       if o.scope.method?.bound then o.scope.method.context else @value
@@ -583,6 +589,11 @@ exports.ThisLiteral = class ThisLiteral extends Literal
   compileNode: (o) ->
     code = if o.scope.method?.bound then o.scope.method.context else @value
     [@makeCode code]
+
+  icedWalkAst: (o) ->
+    super o
+    o.foundThis = true
+    this
 
 exports.UndefinedLiteral = class UndefinedLiteral extends Literal
   constructor: ->
@@ -961,6 +972,11 @@ exports.SuperCall = class SuperCall extends Call
   superThis : (o) ->
     method = o.scope.method
     (method and not method.klass and method.context) or "this"
+
+  icedWalkAst: (o) ->
+    super o
+    o.foundThis = true
+    this
 
 #### RegexWithInterpolations
 
@@ -1834,11 +1850,11 @@ exports.Assign = class Assign extends Base
 # When for the purposes of walking the contents of a function body, the Code
 # has no *children* -- they're within the inner scope.
 exports.Code = class Code extends Base
-  constructor: (params, body, tag) ->
+  constructor: (params, body, tags...) ->
     @params      = params or []
     @body        = body or new Block
-    @icedgen     = tag is 'icedgen'
-    @bound       = tag is 'boundfunc' or @icedgen
+    @icedgen     = 'icedgen' in tags
+    @bound       = 'boundfunc' in tags
     @isGenerator = !!@body.contains (node) ->
       (node instanceof Op and node.isYield()) or node instanceof YieldReturn
 
@@ -1949,11 +1965,6 @@ exports.Code = class Code extends Base
     # Error condition of generators + await, which don't mix
     @error "Methods with `await` cannot be generators" if @isGenerator
 
-    # the outer function must be bound to properly capture this.
-    # TODO: Should it? `@bound = true` here breaks class methods
-    # with await.
-    #@bound = true
-
     # Don't do the same operation the next time through
     @icedFlag = false
 
@@ -1968,8 +1979,12 @@ exports.Code = class Code extends Base
     rhs = new Call f, [ new Value new IdentifierLiteral 'arguments' ]
     body.push(new Assign @icedPassedDeferral, rhs, null, { param: true })
 
-    # var __it = (function* (_this) { [ @body ]} )(this);
-    code = new Code [], (new Block [ @body ]), 'icedgen'
+    # var __it = (function*() { [ @body ]} )();
+    tags = ['icedgen']
+    # Only bind the inner generator function if there are any
+    # references to `this` in the body.
+    tags.push 'boundfunc' if @icedFoundThis
+    code = new Code [], (new Block [ @body ]), tags...
     code.isGenerator = true
 
     if @icedFoundArguments
@@ -1998,8 +2013,10 @@ exports.Code = class Code extends Base
     super o_new
     o.awaitInFile = o.awaitInFile or o_new.awaitInFile
     o.deferInFile = o.deferInFile or o_new.deferInFile
+    o.foundThis = @bound
     @icedFlag = o_new.awaitInFunc
     @icedFoundArguments = o.foundArguments or o_new.foundArguments
+    @icedFoundThis = o.foundThis or o_new.foundThis
 
     for param in @params
       if param.name instanceof Literal and param.name.value is iced.const.autocb
