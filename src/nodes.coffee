@@ -2013,7 +2013,7 @@ exports.Code = class Code extends Base
     super o_new
     o.awaitInFile = o.awaitInFile or o_new.awaitInFile
     o.deferInFile = o.deferInFile or o_new.deferInFile
-    o.foundThis = @bound
+    o.foundThis = o.foundThis or @bound
     @icedFlag = o_new.awaitInFunc
     @icedFoundArguments = o.foundArguments or o_new.foundArguments
     @icedFoundThis = o.foundThis or o_new.foundThis
