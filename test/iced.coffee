@@ -3,6 +3,15 @@ delay = (cb, i) ->
    i = i || 3
    setTimeout cb, i
 
+atest "cb scoping", (cb) ->
+  # Common pattern used in iced programming - ensure
+  # scoping rules here do not change for any reason.
+  foo = (cb) ->
+    await delay defer()
+    cb false, {} # to be ignored - we should call foo's func cb, not outer func cb
+  await foo defer()
+  cb true, {}
+
 atest "nested of/in loop", (cb) ->
   counter = 0
   bar = () ->
@@ -20,7 +29,7 @@ atest "basic iced waiting", (cb) ->
    i++
    cb(i is 2, {})
 
-foo = (i, cb) ->
+glfoo = (i, cb) ->
   await delay(defer(), i)
   cb(i)
 
@@ -32,7 +41,7 @@ atest "basic iced waiting", (cb) ->
 
 atest "basic iced trigger values", (cb) ->
    i = 10
-   await foo(i, defer j)
+   await glfoo(i, defer j)
    cb(i is j, {})
 
 atest "basic iced set structs", (cb) ->
@@ -40,7 +49,7 @@ atest "basic iced set structs", (cb) ->
    i = 10
    obj = { cat : { dog : 0 } }
    await
-     foo(i, defer obj.cat[field])
+     glfoo(i, defer obj.cat[field])
      field = "bar" # change the field to make sure that we captured "yo"
    cb(obj.cat.yo is i, {})
 
@@ -378,6 +387,17 @@ atest 'defer + arguments 2', (cb) ->
   eq x, 2
   cb x, {}
 
+atest 'defer + arguments 3', (cb) ->
+  x = null
+  foo = (a,b,c,cb) ->
+    @x = arguments[1]
+    await delay defer()
+    cb null
+  obj = {}
+  await foo.call obj, 1, 2, 3, defer()
+  eq obj.x, 2
+  cb true, {}
+
 test 'arguments array without await', ->
   code = CoffeeScript.compile "fun = -> console.log(arguments)"
   eq code.indexOf("_arguments"), -1
@@ -516,6 +536,35 @@ atest 'defer + class member assignments', (cb) ->
   c = new MyClass2()
   await c.f defer z
   cb(c.x is 3 and c.y is 4 and z is 5,  {})
+
+atest 'defer + class member assignments 2', (cb) ->
+  foo = (cb) ->
+    await delay defer()
+    cb null, 1, 2, 3
+  class Bar
+    b : (cb) ->
+      await delay defer()
+      await foo defer err, @x, @y, @z
+      cb null
+  c = new Bar()
+  await c.b defer()
+  cb c.x is 1 and c.y is 2 and c.z is 3, {}
+
+atest 'defer + class member assignments 3', (cb) ->
+  foo = (cb) ->
+    await delay defer()
+    cb null, 1, 2, 3
+  class Bar
+    b : (cb) ->
+      await delay defer()
+      bfoo = (cb) =>
+        await foo defer err, @x, @y, @z
+        cb null
+      await bfoo defer()
+      cb null
+  c = new Bar()
+  await c.b defer()
+  cb c.x is 1 and c.y is 2 and c.z is 3, {}
 
 # tests bug #146 (github.com/maxtaco/coffee-script/issues/146)
 atest 'deferral variable with same name as a parameter in outer scope', (cb) ->
@@ -1025,3 +1074,62 @@ test "non-existing builtin fallback", ->
 
   obj2 = { version : __builtin_iced_version_x ? "unknown" }
   eq obj2.version, "unknown"
+
+atest 'async function and this-binding 1', (cb) ->
+  a = (cb) ->
+    await delay defer()
+    @x = 5
+    cb null
+  obj = {}
+  await a.call(obj, defer())
+  cb obj.x is 5, {}
+
+atest 'async function and this-binding 2', (cb) ->
+  obj = {}
+  a = (cb) ->
+    b = (cb) =>
+      await delay defer()
+      ok @ is obj
+      cb null
+    await b defer()
+    # passing another `this` using `call` should not do anything
+    # because b is bound.
+    await b.call {}, defer()
+    cb null
+  await a.call(obj, defer())
+  cb true, {}
+
+atest 'async function and this-binding 3', (cb) ->
+  obj1 = {}
+  obj2 = {}
+  a = (cb) ->
+    ok @ is obj1
+    b = (cb) ->
+      await delay defer()
+      ok @ is obj2
+      cb null
+    ok @ is obj1
+    await b.call obj2, defer()
+    ok @ is obj1
+    cb null
+  await a.call obj1, defer()
+  cb true, {}
+
+# test "caller name compatibility", () ->
+#   main_sync = () ->
+#     foo = () ->
+#       caller = foo.caller?.name
+#       eq caller, "main_sync"
+#     x = foo()
+#   main_sync()
+
+# atest "(async) caller name compatibility", (cb) ->
+#   main_async = (cb) ->
+#     main_async.name2 = 'main_async'
+#     foo = () ->
+#       caller = foo.caller?.name2
+#       eq caller.caller, "main_async"
+#     x = foo()
+#     await delay defer()
+#     cb true, {}
+#   main_async cb
