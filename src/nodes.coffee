@@ -2011,12 +2011,12 @@ exports.Code = class Code extends Base
     # Replace context for new function scope.
     o_new = { func : @ }
     super o_new
-    o.awaitInFile = o.awaitInFile or o_new.awaitInFile
-    o.deferInFile = o.deferInFile or o_new.deferInFile
-    o.foundThis = o.foundThis or @bound
+    o.awaitInFile or= o_new.awaitInFile
+    o.deferInFile or= o_new.deferInFile
+    o.foundThis or= @bound
     @icedFlag = o_new.awaitInFunc
     @icedFoundArguments = o.foundArguments or o_new.foundArguments
-    @icedFoundThis = o.foundThis or o_new.foundThis
+    @icedFoundThis = @bound or o_new.foundThis
 
     for param in @params
       if param.name instanceof Literal and param.name.value is iced.const.autocb

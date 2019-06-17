@@ -497,7 +497,7 @@ runTests = (CoffeeScript) ->
   else
     runtime = 'inline'
 
-  # files = [ 'iced.coffee', 'iced_advanced.coffee' ]
+  # files = [ 'iced.coffee', 'iced_advanced.coffee', 'iced_trace_names.coffee' ]
   # files = [ 'iced_trace_names.coffee' ]
 
   for file in files when helpers.isCoffee file
