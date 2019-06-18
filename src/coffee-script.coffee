@@ -11,9 +11,15 @@ path          = require 'path'
 helpers       = require './helpers'
 SourceMap     = require './sourcemap'
 
-# CoffeeScript (original) version which this iced patchset is based on.
+# CoffeeScript (original) version which this iced patchset is based on. This
+# should not change, CoffeeScript 1 is no longer updated after the moved over
+# to Coffee Script 2 with ES6 output.
 exports.COFFEE_VERSION = '1.12.8'
 exports.VERSION = exports.COFFEE_VERSION
+# IcedCoffeeScript version. We used to derive ICED_VERSION from COFFEE_VERSION
+# which Iced patched was based on, but since CoffeeScript no longer moves, we
+# are doing normal semver starting with 112.0.0.
+exports.ICED_VERSION = '112.0.0'
 
 try
   # If available, use version from package.json. Require `package.json`, which
@@ -30,11 +36,6 @@ exports.helpers = helpers
 
 # Run through the "iced" transform process
 icedTransform = (x, options) -> x.icedTransform options
-
-exports.ICED_PATCH_VERSION = 1
-exports.ICED_VERSION = do ->
-    v = exports.COFFEE_VERSION.split('.').map (x)-> parseInt x
-    [ v[0] * 100 + v[1], v[2], exports.ICED_PATCH_VERSION ].join('.')
 
 # Function that allows for btoa in both nodejs and the browser.
 base64encode = (src) -> switch

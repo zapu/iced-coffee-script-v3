@@ -18,6 +18,7 @@ script:
   - node ./bin/cake build:browser
   - node --harmony ./bin/cake test
   - node --harmony ./bin/cake test:browser
+  - node ./bin/cake check_version
 
 notifications:
   email: false

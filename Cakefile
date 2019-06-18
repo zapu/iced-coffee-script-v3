@@ -497,7 +497,7 @@ runTests = (CoffeeScript) ->
   else
     runtime = 'inline'
 
-  # files = [ 'iced.coffee', 'iced_advanced.coffee', 'iced_trace_names.coffee' ]
+  files = [ 'iced.coffee', 'iced_advanced.coffee', 'iced_trace_names.coffee' ]
   # files = [ 'iced_trace_names.coffee' ]
 
   for file in files when helpers.isCoffee file
@@ -520,3 +520,11 @@ task 'test:browser', 'run the test suite against the merged browser script', ->
   global.testingBrowser = yes
   (-> eval source).call result
   testResults = runTests result.CoffeeScript
+
+task 'check_version', 'Check version between package.json and version compiled in', ->
+  pkgjson = require './package.json'
+  console.log "Version in package.json:", pkgjson?.version
+  console.log "Version in compiler:", CoffeeScript.ICED_VERSION
+  if pkgjson?.version isnt CoffeeScript.ICED_VERSION
+    log "version mismatch", red
+    process.exit(1)
