@@ -21,7 +21,9 @@ CoffeeScript is a little language that compiles into JavaScript.
 IcedCoffeeScript is a superset of CoffeeScript that adds two new
 keywords: `await` and `defer`.
 
-IcedCoffeeScript is based on CoffeeScript V1.
+IcedCoffeeScript is based on CoffeeScript V1 - the one without Javascript ES6
+support. Based on top of last CoffeeScript V1, version 1.12.8, git commit id:
+`943579a23943ce62e8d2e3dbc868f22bac773f36`.
 
 ## Iced v3 Alpha
 
