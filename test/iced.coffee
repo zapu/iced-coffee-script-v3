@@ -1127,6 +1127,21 @@ atest 'this-binding in string interpolations', (cb) ->
   await obj.a defer msg
   cb msg is "Hello world", {}
 
+atest 'this-binding in class method', (cb) ->
+  class A
+    constructor : () -> @test = 0
+    foo : (cb) ->
+      bar = (cb) =>
+        await delay defer()
+        @test++
+        cb null
+      await bar defer()
+      await bar.call {}, defer()
+      cb null
+  obj = new A()
+  await obj.foo defer()
+  cb obj.test is 2, {}
+
 # test "caller name compatibility", () ->
 #   main_sync = () ->
 #     foo = () ->
