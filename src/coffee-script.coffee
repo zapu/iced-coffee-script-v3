@@ -11,15 +11,15 @@ path          = require 'path'
 helpers       = require './helpers'
 SourceMap     = require './sourcemap'
 
-# CoffeeScript (original) version which this iced patchset is based on. This
-# should not change, CoffeeScript 1 is no longer updated after the moved over
-# to Coffee Script 2 with ES6 output.
+# CoffeeScript (original) version which this iced patchset is based on.
+# CoffeeScript 1 is no longer being developed with exception of occasional
+# patches.
 exports.COFFEE_VERSION = '1.12.8'
 exports.VERSION = exports.COFFEE_VERSION
 # IcedCoffeeScript version. We used to derive ICED_VERSION from COFFEE_VERSION
-# which Iced patched was based on, but since CoffeeScript no longer moves, we
-# are doing normal semver starting with 112.0.0.
-exports.ICED_VERSION = '112.0.0'
+# which Iced patched was based on, and Iced3 is consistent with that scheme.
+# The scheme is as following: `v[0] * 100 + v[1], v[2], ICED_PATCH_VERSION`
+exports.ICED_VERSION = '112.8.0'
 
 try
   # If available, use version from package.json. Require `package.json`, which
