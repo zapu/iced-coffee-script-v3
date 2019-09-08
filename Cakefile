@@ -53,7 +53,7 @@ run = (args, callback) ->
 buildParser = ->
   helpers.extend global, require 'util'
   require 'jison'
-  parser = require('./lib/coffee-script/grammar').parser.generate()
+  parser = require('./src/grammar').parser.generate()
   # Patch Jison’s output, until https://github.com/zaach/jison/pull/339 is accepted,
   # to ensure that require('fs') is only called where it exists.
   parser = parser.replace "var source = require('fs')", """

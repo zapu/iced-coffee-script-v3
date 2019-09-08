@@ -286,7 +286,7 @@ exports.Lexer = class Lexer
   # Matches and consumes comments.
   commentToken: ->
     return 0 unless match = @chunk.match COMMENT
-    [comment, here] = match
+    [comment, here, oneline] = match
     if here
       if match = HERECOMMENT_ILLEGAL.exec comment
         @error "block comments cannot contain #{match[0]}",
@@ -294,6 +294,8 @@ exports.Lexer = class Lexer
       if here.indexOf('\n') >= 0
         here = here.replace /// \n #{repeat ' ', @indent} ///g, '\n'
       @token 'HERECOMMENT', here, 0, comment.length
+    else
+      @token 'HERECOMMENT', oneline, 0, comment.length
     comment.length
 
   # Matches JavaScript interpolated directly into the source via backticks.
@@ -970,7 +972,7 @@ OPERATOR   = /// ^ (
 
 WHITESPACE = /^[^\n\S]+/
 
-COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|###$)|^(?:\s*#(?!##[^#]).*)+/
+COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|###$)|^(?:#(?!##[^#])([^\n]*))+/
 
 CODE       = /^[-=]>/
 
