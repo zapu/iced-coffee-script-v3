@@ -24,7 +24,7 @@ exports.ICED_VERSION = '112.8.0'
 try
   # If available, use version from package.json. Require `package.json`, which
   # is two levels above this file, as this file is typically evaluated from
-  # `lib/coffee-script`. 
+  # `lib/coffee-script`.
   # TODO: UNDECIDED
   # packageJson   = require '../../package.json'
   # exports.VERSION = packageJson.version
@@ -94,13 +94,19 @@ exports.compile = compile = withPrettyErrors (code, options) ->
   sources[filename] = code
   map = new SourceMap if generateSourceMap
 
-  tokens = lexer.tokenize code, options
+  [tokens, comments] = lexer.tokenize code, options
+  console.log comments
 
   # Pass a list of referenced variables, so that generated variables won't get
   # the same name.
   options.referencedVars = (
     token[1] for token in tokens when token[0] is 'IDENTIFIER'
   )
+
+  # Pass comments. Type-comments affect codegen. We also mark type-comments as
+  # "used", so we can error out if there are any unused and therefore misplaced
+  # type-comments.
+  options.comments = comments
 
   # Check for import or export; if found, force bare mode.
   unless options.bare? and options.bare is yes
@@ -110,6 +116,8 @@ exports.compile = compile = withPrettyErrors (code, options) ->
         break
 
   fragments = icedTransform(parser.parse(tokens), options).compileToFragments options
+
+  insertComments fragments, options
 
   currentLine = 0
   currentLine += 1 if options.header
@@ -316,6 +324,43 @@ parser.yy.parseError = (message, {token}) ->
   # (from the previous token), so we take the location information directly
   # from the lexer.
   helpers.throwSyntaxError "unexpected #{errorText}", errorLoc
+
+insertComments = (fragments, options) ->
+  {comments} = options
+
+  commentI = 0
+  i = 0
+
+  lineIndent = ''
+
+  while i < fragments.length and commentI < comments.length
+    fragment = fragments[i]
+    comment = comments[commentI]
+    if comment.jsdoc
+      if not comment.fullLine
+        helpers.throwSyntaxError "JSDoc comment should span the entire line", comment.locationData
+
+      if not comment.jsdocConsumed
+        helpers.throwSyntaxError "Unexpected JSDoc comment (not used by code-gen)", comment.locationData
+      else
+        # Consumed by code-gen - already emitted in correct place by nodes.coffee.
+        commentI++
+        continue
+
+    console.log fragment.locationData, "'#{fragment.code.replace('\n', '\\n')}'"
+
+    lineIndent = fragment.code if fragment.code.match(/^\s*$/)
+
+    if fragment.locationData?.first_line >= comment.locationData.first_line
+      commentCode = switch
+        when comment.fullLine then lineIndent + '//' + comment.text + '\n'
+        when comment.endOfLine then ' //' + comment.text + '\n'
+        else ' /* ' + comment.text + ' */'
+      fragments.splice(i, 0, {
+        code: commentCode
+      })
+      commentI++
+    i++
 
 # Based on http://v8.googlecode.com/svn/branches/bleeding_edge/src/messages.js
 # Modified to handle sourceMap

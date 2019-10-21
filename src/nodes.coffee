@@ -1716,6 +1716,16 @@ exports.Assign = class Assign extends Base
         # Simple common case of assignment to a variable
         @value.icedTraceName = @variable.base.value
 
+    jsdocComment = null
+    if o.comments
+      locData = @locationData ? @variable.locationData
+      for comment in o.comments
+        if comment.jsdoc and comment.locationData.last_line is locData.first_line-1
+          comment.jsdocConsumed = true
+          jsdocComment = comment
+          console.log @
+          break
+
     shouldDeclare = false
     unless @context
       varBase = @variable.unwrapAll()
@@ -1732,7 +1742,7 @@ exports.Assign = class Assign extends Base
           @checkAssignability o, varBase
           found = o.scope.find(varBase.value)
           if not found and @canDeclare and o.level is LEVEL_TOP
-            o.scope.add(varBase.value, 'vardecl')
+            o.scope.add(varBase.value, 'let')
             shouldDeclare = true
 
     if @value instanceof Code and not @value.icedTraceName
@@ -1758,6 +1768,8 @@ exports.Assign = class Assign extends Base
     answer = compiledName.concat @makeCode(" #{ @context or '=' } "), val
     if shouldDeclare
       answer.unshift @makeCode("let ")
+    if jsdocComment
+      answer.unshift @makeCode("/**#{jsdocComment.text} */\n#{o.indent}")
       #console.log answer.map((x) -> x.code)
     if o.level <= LEVEL_LIST then answer else @wrapInBraces answer
 

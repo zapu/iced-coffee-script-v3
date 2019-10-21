@@ -24,6 +24,7 @@ exports.Rewriter = class Rewriter
   rewrite: (@tokens) ->
     # Helpful snippet for debugging:
     #     console.log (t[0] + '/' + t[1] for t in @tokens).join ' '
+    @rewriteComments()
     @removeLeadingNewlines()
     @closeOpenCalls()
     @closeOpenIndexes()
@@ -32,7 +33,7 @@ exports.Rewriter = class Rewriter
     @addImplicitBracesAndParens()
     @addLocationDataToGeneratedTokens()
     @fixOutdentLocationData()
-    @tokens
+    return [@tokens, @comments]
 
   # Rewrite the token stream, looking one token ahead and behind.
   # Allow the return value of the block to tell us how many tokens to move
@@ -432,6 +433,34 @@ exports.Rewriter = class Rewriter
         tokens.splice i, 1 if tag is 'THEN'
         return 1
       return 1
+
+  rewriteComments: () ->
+    savedComments = []
+    @scanTokens (token, i, tokens) ->
+      [tag, text, locationData] = token
+      if tag is 'HERECOMMENT'
+        prev = tokens[i-1]?[0]
+        next = tokens[i+1]?[0]
+        fullLine = false
+        endOfLine = false
+        if (not prev or prev is 'TERMINATOR') and (not next or next is 'TERMINATOR')
+          fullLine = true
+        else if (not next or next is 'TERMINATOR')
+          endOfLine = true
+
+        jsdoc = text.match(/^@(type|param)/)?[1]
+        savedComments.push {
+          tag, text, locationData, fullLine, endOfLine, jsdoc
+        }
+
+        # Remove comment token.
+        tokens.splice i, 1
+        if fullLine
+          # Remove the TERMINATOR as well so we don't end up with a newline
+          # after a newline - grammar does not expect that.
+          tokens.splice i, 1
+      return 1
+    @comments = savedComments
 
   # Tag postfix conditionals as such, so that we can parse them with a
   # different precedence.

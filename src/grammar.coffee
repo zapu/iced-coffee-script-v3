@@ -95,7 +95,6 @@ grammar =
   # Pure statements which cannot be expressions.
   Statement: [
     o 'Return'
-    o 'Comment'
     o 'STATEMENT',                              -> new StatementLiteral $1
     o 'Import'
     o 'Export'
@@ -203,7 +202,6 @@ grammar =
     o 'SimpleObjAssignable =
        INDENT Expression OUTDENT',              -> new Assign LOC(1)(new Value $1), $4, null,
                                                               operatorToken: LOC(2)(new Literal $2)
-    o 'Comment'
   ]
 
   SimpleObjAssignable: [
@@ -227,11 +225,6 @@ grammar =
   YieldReturn: [
     o 'YIELD RETURN Expression',                -> new YieldReturn $3
     o 'YIELD RETURN',                           -> new YieldReturn
-  ]
-
-  # A block comment.
-  Comment: [
-    o 'HERECOMMENT',                            -> new Comment $1
   ]
 
   # The **Code** node is the function literal. It's defined by an indented block
