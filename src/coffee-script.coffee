@@ -168,7 +168,8 @@ exports.compile = compile = withPrettyErrors (code, options) ->
 
 # Tokenize a string of CoffeeScript code, and return the array of tokens.
 exports.tokens = withPrettyErrors (code, options) ->
-  lexer.tokenize code, options
+  [tokens] = lexer.tokenize code, options
+  return tokens
 
 # Parse a string of CoffeeScript code or an array of lexed tokens, and
 # return the AST. You can then compile it by calling `.compile()` on the root,

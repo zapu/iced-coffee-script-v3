@@ -459,7 +459,10 @@ exports.Rewriter = class Rewriter
           # Remove the TERMINATOR as well so we don't end up with a newline
           # after a newline - grammar does not expect that.
           tokens.splice i, 1
-      return 1
+        return 0
+      else
+        # Not a comment.
+        return 1
     @comments = savedComments
 
   # Tag postfix conditionals as such, so that we can parse them with a
