@@ -286,6 +286,8 @@ exports.Lexer = class Lexer
   # Matches and consumes comments.
   commentToken: ->
     return 0 unless match = @chunk.match COMMENT
+    #console.log '\nchunk:'
+    #console.log @chunk.replace(/\n/g, '\\n')
     [comment, here, oneline] = match
     if here
       if match = HERECOMMENT_ILLEGAL.exec comment
@@ -296,8 +298,9 @@ exports.Lexer = class Lexer
       @token 'HERECOMMENT', here, 0, comment.length
     else
       @token 'HERECOMMENT', oneline, 0, comment.length
-      console.log comment.replace(/\n/g, '\\n')
-      console.log oneline.replace(/\n/g, '\\n')
+      #console.log 'found:'
+      #console.log comment.replace(/\n/g, '\\n')
+      #console.log oneline.replace(/\n/g, '\\n')
     comment.length
 
   # Matches JavaScript interpolated directly into the source via backticks.
@@ -974,7 +977,7 @@ OPERATOR   = /// ^ (
 
 WHITESPACE = /^[^\n\S]+/
 
-COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|###$)|^(?:\s*#(?!##[^#])([^\n]*).*)+/
+COMMENT    = /^###([^#][\s\S]*?)(?:###[^\n\S]*|###$)|^(?:\s*#(?!##[^#])(.*))/
 
 CODE       = /^[-=]>/
 
