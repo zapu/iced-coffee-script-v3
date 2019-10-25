@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+const {coffeeSrc} = require('./run_coffee_dev')
+
+require(coffeeSrc + '/cake').run()

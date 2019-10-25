@@ -24,4 +24,11 @@ const command = require(coffeeSrc + "/command")
 // Registering should overwrite "prod" version extensions with "dev" versions.
 coffee.register()
 
-command.run()
+if (require.main === module) {
+    // If `run_coffee_dev` is being ran directly, run command.
+    command.run()
+} else {
+    // Otherwise, export `coffeeSrc`, so other scripts can use this
+    // file to run code against dynamicially compiled compiler.
+    exports.coffeeSrc = coffeeSrc
+}
