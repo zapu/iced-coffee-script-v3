@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
-const {coffeeSrc} = require('./run_coffee_dev')
+const {coffeeSrc, coffeeLib} = require('./run_coffee_dev')
+
+// Trick Cakefile to run dynamic CoffeeScript instead of the one from lib.
+for(let x of ['index', 'helpers', 'repl']) {
+    require(coffeeSrc + `/${x}`)
+    const libFilename = coffeeLib + `/${x}.js`
+    require.cache[libFilename] = require.cache[coffeeSrc + `/${x}.coffee`]
+}
 
 require(coffeeSrc + '/cake').run()
