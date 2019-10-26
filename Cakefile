@@ -387,6 +387,9 @@ runTests = (CoffeeScript) ->
   currentFile = null
   passedTests = 0
   failures    = []
+  files       = []
+
+  fileVarFilter = if rx = process.env.CAKE_TEST_FILTER then new RegExp(rx) else null
 
   global[name] = func for name, func of require 'assert'
 
@@ -455,6 +458,8 @@ runTests = (CoffeeScript) ->
   # When all the tests have run, collect and print errors.
   # If a stacktrace is available, output the compiled function source.
   process.on 'exit', ->
+    if fileVarFilter?
+      log "Filtering files, only ran: #{files.join(', ')}", green
     time = ((Date.now() - startTime) / 1000).toFixed(2)
     message = "passed #{passedTests} (incl. #{asyncTestsDone} async) tests in #{time} seconds#{reset}"
     # Iced additions: remember to check asyncTests array.
@@ -497,8 +502,8 @@ runTests = (CoffeeScript) ->
   else
     runtime = 'inline'
 
-  # files = [ 'iced.coffee', 'iced_advanced.coffee', 'iced_trace_names.coffee' ]
-  # files = [ 'iced_trace_names.coffee' ]
+  if fileVarFilter?
+    files = files.filter (fname) -> fname.match(fileVarFilter)
 
   for file in files when helpers.isCoffee file
     literate = helpers.isLiterate file
