@@ -24,7 +24,7 @@ exports.Rewriter = class Rewriter
   rewrite: (@tokens) ->
     # Helpful snippet for debugging:
     #     console.log (t[0] + '/' + t[1] for t in @tokens).join ' '
-    @rewriteComments()
+    #@rewriteComments()
     @removeLeadingNewlines()
     @closeOpenCalls()
     @closeOpenIndexes()
@@ -33,7 +33,7 @@ exports.Rewriter = class Rewriter
     @addImplicitBracesAndParens()
     @addLocationDataToGeneratedTokens()
     @fixOutdentLocationData()
-    return [@tokens, @comments]
+    return @tokens
 
   # Rewrite the token stream, looking one token ahead and behind.
   # Allow the return value of the block to tell us how many tokens to move

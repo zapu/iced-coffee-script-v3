@@ -400,7 +400,7 @@ timeLog = (message) ->
 printTokens = (tokens) ->
   strings = for token in tokens
     tag = token[0]
-    value = token[1].toString().replace(/\n/, '\\n')
+    value = token[1].toString().replace(/\n/g, '\\n')
     "[#{tag} #{value}]"
   printLine strings.join(' ')
 

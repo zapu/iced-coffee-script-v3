@@ -94,8 +94,9 @@ exports.compile = compile = withPrettyErrors (code, options) ->
   sources[filename] = code
   map = new SourceMap if generateSourceMap
 
-  [tokens, comments] = lexer.tokenize code, options
-  console.log comments
+  tokens = lexer.tokenize code, options
+  comments = lexer.comments
+  #console.log 'Comments:',comments
 
   # Pass a list of referenced variables, so that generated variables won't get
   # the same name.
@@ -168,8 +169,7 @@ exports.compile = compile = withPrettyErrors (code, options) ->
 
 # Tokenize a string of CoffeeScript code, and return the array of tokens.
 exports.tokens = withPrettyErrors (code, options) ->
-  [tokens] = lexer.tokenize code, options
-  return tokens
+  lexer.tokenize code, options
 
 # Parse a string of CoffeeScript code or an array of lexed tokens, and
 # return the AST. You can then compile it by calling `.compile()` on the root,
@@ -348,7 +348,7 @@ insertComments = (fragments, options) ->
         commentI++
         continue
 
-    console.log fragment.locationData, "'#{fragment.code.replace('\n', '\\n')}'"
+    #console.log fragment.locationData, "'#{fragment.code.replace('\n', '\\n')}'"
 
     lineIndent = fragment.code if fragment.code.match(/^\s*$/)
 

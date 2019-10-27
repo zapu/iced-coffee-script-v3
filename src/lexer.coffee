@@ -47,6 +47,7 @@ exports.Lexer = class Lexer
     @seenExport = no             # Used to recognize EXPORT FROM? AS? tokens.
     @importSpecifierList = no    # Used to identify when in an IMPORT {...} FROM? ...
     @exportSpecifierList = no    # Used to identify when in an EXPORT {...} FROM? ...
+    @comments = []
 
     @chunkLine =
       opts.line or 0             # The start line for the current @chunk.
@@ -293,15 +294,31 @@ exports.Lexer = class Lexer
       if match = HERECOMMENT_ILLEGAL.exec comment
         @error "block comments cannot contain #{match[0]}",
           offset: match.index, length: match[0].length
+      console.log 'found here:'
+      console.log here.replace(/\n/g, '\\n')
       if here.indexOf('\n') >= 0
         here = here.replace /// \n #{repeat ' ', @indent} ///g, '\n'
-      @token 'HERECOMMENT', here, 0, comment.length
+      token = @makeToken 'HERECOMMENT', here, 0, comment.length
+      jsdoc = null
+      fullLine = false
+      endOfline = false
     else
-      @token 'HERECOMMENT', oneline, 0, comment.length
-      #console.log 'found:'
+      #@token 'HERECOMMENT', oneline, 0, comment.length
+      token = @makeToken 'HERECOMMENT', oneline, 0, comment.length
+      jsdoc = oneline.match(/^@(type|param)/)?[1]
+      fullLine = true
+      endOfline = false
+      #console.log 'found oneline:'
       #console.log comment.replace(/\n/g, '\\n')
       #console.log oneline.replace(/\n/g, '\\n')
-    comment.length
+
+    @comments.push {
+      tag: token[0]
+      text: token[1]
+      locationData: token[2]
+      jsdoc, fullLine, endOfline
+    }
+    return comment.length
 
   # Matches JavaScript interpolated directly into the source via backticks.
   jsToken: ->
