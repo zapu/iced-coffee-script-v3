@@ -96,7 +96,7 @@ exports.compile = compile = withPrettyErrors (code, options) ->
 
   tokens = lexer.tokenize code, options
   comments = lexer.comments
-  #console.log 'Comments:',comments
+  console.log 'Comments:',comments
 
   # Pass a list of referenced variables, so that generated variables won't get
   # the same name.
@@ -329,14 +329,33 @@ parser.yy.parseError = (message, {token}) ->
 insertComments = (fragments, options) ->
   {comments} = options
 
-  commentI = 0
-  i = 0
+  backtrackForNewline = (start) ->
+    console.log 'btf from', start, fragments[start]
+    return false if start is 0
+    for i in [start-1...0]
+      console.log 'btf', i, fragments[i]
+      switch
+        when fragments[i].code.match(/\n\s*$/) then return true
+        when fragments[i].code.match(/^\s*$/) then continue
+        else return false
 
-  lineIndent = ''
+  findIndent = (start) ->
+    m = fragments[start].code.match(/^(\s+)/)
+    indent = if m? then m[1] else ''
+    return indent if start is 0
+    for i in [start-1...0]
+      switch
+        when m = fragments[i].code.match(/\n(\s*)$/)
+          return indent + m[1]
+        when m = fragments[i].code.match(/^\s*$/)
+          indent += m[0]
+          continue
+        else
+          return indent
 
-  while i < fragments.length and commentI < comments.length
-    fragment = fragments[i]
-    comment = comments[commentI]
+  firstFrag = fragments[0]
+  comments.forEach (comment) ->
+    console.log 'On Comm', comment
     if comment.jsdoc
       if not comment.fullLine
         helpers.throwSyntaxError "JSDoc comment should span the entire line", comment.locationData
@@ -345,23 +364,25 @@ insertComments = (fragments, options) ->
         helpers.throwSyntaxError "Unexpected JSDoc comment (not used by code-gen)", comment.locationData
       else
         # Consumed by code-gen - already emitted in correct place by nodes.coffee.
-        commentI++
-        continue
+        return
 
-    #console.log fragment.locationData, "'#{fragment.code.replace('\n', '\\n')}'"
+    {fullLine, endOfLine, locationData : cLoc} = comment
+    for i in [0...fragments.length]
+      frag = fragments[i]
+      #console.log i, frag
+      fragLoc = frag.locationData
+      continue unless fragLoc?
+      if fullLine or endOfLine
+        if fragLoc.first_line > cLoc.first_line
+          code = " /* #{comment.text} */ "
+          if frag is firstFrag or backtrackForNewline(i)
+            ind = findIndent(i)
+            code = "#{ind}//#{comment.text}\n"
 
-    lineIndent = fragment.code if fragment.code.match(/^\s*$/)
-
-    if fragment.locationData?.first_line >= comment.locationData.first_line
-      commentCode = switch
-        when comment.fullLine then lineIndent + '//' + comment.text + '\n'
-        when comment.endOfLine then ' //' + comment.text + '\n'
-        else ' /* ' + comment.text + ' */'
-      fragments.splice(i, 0, {
-        code: commentCode
-      })
-      commentI++
-    i++
+          fragments.splice(i, 0, {
+            code, locationData: cLoc
+          })
+          break
 
 # Based on http://v8.googlecode.com/svn/branches/bleeding_edge/src/messages.js
 # Modified to handle sourceMap

@@ -287,15 +287,15 @@ exports.Lexer = class Lexer
   # Matches and consumes comments.
   commentToken: ->
     return 0 unless match = @chunk.match COMMENT
-    #console.log '\nchunk:'
-    #console.log @chunk.replace(/\n/g, '\\n')
+    # console.log '\nchunk:'
+    # console.log @chunk.replace(/\n/g, '\\n')
     [comment, here, oneline] = match
     if here
       if match = HERECOMMENT_ILLEGAL.exec comment
         @error "block comments cannot contain #{match[0]}",
           offset: match.index, length: match[0].length
-      console.log 'found here:'
-      console.log here.replace(/\n/g, '\\n')
+      # console.log 'found here:'
+      # console.log here.replace(/\n/g, '\\n')
       if here.indexOf('\n') >= 0
         here = here.replace /// \n #{repeat ' ', @indent} ///g, '\n'
       token = @makeToken 'HERECOMMENT', here, 0, comment.length
@@ -306,11 +306,12 @@ exports.Lexer = class Lexer
       #@token 'HERECOMMENT', oneline, 0, comment.length
       token = @makeToken 'HERECOMMENT', oneline, 0, comment.length
       jsdoc = oneline.match(/^@(type|param)/)?[1]
-      fullLine = true
-      endOfline = false
-      #console.log 'found oneline:'
-      #console.log comment.replace(/\n/g, '\\n')
-      #console.log oneline.replace(/\n/g, '\\n')
+      isFirstToken = @tokens.length is 0 and @comments.length is 0
+      fullLine = isFirstToken or !!comment.match(/^\s*\n/)
+      endOfline = not fullLine
+      console.log 'found oneline:'
+      console.log comment.replace(/\n/g, '\\n')
+      console.log oneline.replace(/\n/g, '\\n')
 
     @comments.push {
       tag: token[0]

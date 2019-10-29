@@ -337,6 +337,7 @@ exports.Block = class Block extends Base
       expr = @expressions[len]
       if expr not instanceof Comment
         @expressions[len] = expr.makeReturn res
+        @expressions[len].updateLocationDataIfMissing expr.locationData
         @expressions.splice(len, 1) if expr instanceof Return and not expr.expression
         break
     this
