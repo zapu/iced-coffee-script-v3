@@ -301,14 +301,14 @@ exports.Lexer = class Lexer
       token = @makeToken 'HERECOMMENT', here, 0, comment.length
       jsdoc = null
       fullLine = false
-      endOfline = false
+      endOfLine = false
     else
       #@token 'HERECOMMENT', oneline, 0, comment.length
       token = @makeToken 'HERECOMMENT', oneline, 0, comment.length
       jsdoc = oneline.match(/^@(type|param)/)?[1]
       isFirstToken = @tokens.length is 0 and @comments.length is 0
       fullLine = isFirstToken or !!comment.match(/^\s*\n/)
-      endOfline = not fullLine
+      endOfLine = not fullLine
       console.log 'found oneline:'
       console.log comment.replace(/\n/g, '\\n')
       console.log oneline.replace(/\n/g, '\\n')
@@ -317,7 +317,7 @@ exports.Lexer = class Lexer
       tag: token[0]
       text: token[1]
       locationData: token[2]
-      jsdoc, fullLine, endOfline
+      jsdoc, fullLine, endOfLine
     }
     return comment.length
 

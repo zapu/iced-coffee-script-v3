@@ -329,33 +329,26 @@ parser.yy.parseError = (message, {token}) ->
 insertComments = (fragments, options) ->
   {comments} = options
 
-  backtrackForNewline = (start) ->
-    console.log 'btf from', start, fragments[start]
-    return false if start is 0
-    for i in [start-1...0]
-      console.log 'btf', i, fragments[i]
-      switch
-        when fragments[i].code.match(/\n\s*$/) then return true
-        when fragments[i].code.match(/^\s*$/) then continue
-        else return false
-
   findIndent = (start) ->
-    m = fragments[start].code.match(/^(\s+)/)
-    indent = if m? then m[1] else ''
-    return indent if start is 0
-    for i in [start-1...0]
+    console.log 'bt start', start, fragments[start]
+    return ['', 0, true, ''] if start is 0
+    m = fragments[start].code.match(/^(\s*)/)
+    indent = m[1]
+    postdent = ''
+    for i in [start-1..0]
+      console.log 'bting', i, fragments[i]
       switch
         when m = fragments[i].code.match(/\n(\s*)$/)
-          return indent + m[1]
+          postdent += m[1]
+          return [indent, i+1, true, postdent]
         when m = fragments[i].code.match(/^\s*$/)
           indent += m[0]
           continue
         else
-          return indent
+          return [indent, i+1, false, '']
 
-  firstFrag = fragments[0]
+  startFragI = 0
   comments.forEach (comment) ->
-    console.log 'On Comm', comment
     if comment.jsdoc
       if not comment.fullLine
         helpers.throwSyntaxError "JSDoc comment should span the entire line", comment.locationData
@@ -366,23 +359,33 @@ insertComments = (fragments, options) ->
         # Consumed by code-gen - already emitted in correct place by nodes.coffee.
         return
 
+    console.log 'On Comm', comment
     {fullLine, endOfLine, locationData : cLoc} = comment
-    for i in [0...fragments.length]
+    for i in [startFragI...fragments.length]
       frag = fragments[i]
       #console.log i, frag
       fragLoc = frag.locationData
       continue unless fragLoc?
-      if fullLine or endOfLine
-        if fragLoc.first_line > cLoc.first_line
-          code = " /* #{comment.text} */ "
-          if frag is firstFrag or backtrackForNewline(i)
-            ind = findIndent(i)
-            code = "#{ind}//#{comment.text}\n"
+      if fragLoc.first_line > cLoc.first_line
+        if fullLine or endOfLine
+          [indent, i, canNewline, postdent] = findIndent(i)
+          if canNewline
+            code = "#{indent}//#{comment.text}\n#{postdent}"
+          else
+            code = " /*#{comment.text} */ "
 
+          startFragI = i
           fragments.splice(i, 0, {
-            code, locationData: cLoc
+            code, locationData: cLoc, type: 'Comment'
           })
-          break
+          return # we are done with adding this comment
+
+    # Couldn't find a fragment - must be end of file.
+    if fullLine or endOfLine
+      code = "//#{comment.text}"
+      fragments.push {
+        code, locationData: cLoc
+      }
 
 # Based on http://v8.googlecode.com/svn/branches/bleeding_edge/src/messages.js
 # Modified to handle sourceMap

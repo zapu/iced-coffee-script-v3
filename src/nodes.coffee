@@ -1404,6 +1404,7 @@ exports.Class = class Class extends Base
     props = node.base.properties[..]
     exprs = while assign = props.shift()
       if assign instanceof Assign
+        locData = assign.locationData
         base = assign.variable.base
         delete assign.context
         func = assign.value
@@ -1417,12 +1418,14 @@ exports.Class = class Class extends Base
           else
             @externalCtor = o.classScope.freeVariable 'ctor'
             assign = new Assign new IdentifierLiteral(@externalCtor), func
+            assign.updateLocationDataIfMissing locData
         else
           if assign.variable.this
             func.static = yes
           else
             acc = if base.isComplex() then new Index base else new Access base
             assign.variable = new Value(new IdentifierLiteral(name), [(new Access new PropertyName 'prototype'), acc])
+            assign.variable.updateLocationDataIfMissing locData
             if func instanceof Code and func.bound
               @boundFuncs.push base
               func.bound = no
