@@ -1727,7 +1727,7 @@ exports.Assign = class Assign extends Base
         if comment.jsdoc and comment.locationData.last_line is locData.first_line-1
           comment.jsdocConsumed = true
           jsdocComment = comment
-          console.log @
+          #console.log @
           break
 
     shouldDeclare = false

@@ -309,9 +309,9 @@ exports.Lexer = class Lexer
       isFirstToken = @tokens.length is 0 and @comments.length is 0
       fullLine = isFirstToken or !!comment.match(/^\s*\n/)
       endOfLine = not fullLine
-      console.log 'found oneline:'
-      console.log comment.replace(/\n/g, '\\n')
-      console.log oneline.replace(/\n/g, '\\n')
+      #console.log 'found oneline:'
+      #console.log comment.replace(/\n/g, '\\n')
+      #console.log oneline.replace(/\n/g, '\\n')
 
     @comments.push {
       tag: token[0]

@@ -96,7 +96,7 @@ exports.compile = compile = withPrettyErrors (code, options) ->
 
   tokens = lexer.tokenize code, options
   comments = lexer.comments
-  console.log 'Comments:',comments
+  #console.log 'Comments:',comments
 
   # Pass a list of referenced variables, so that generated variables won't get
   # the same name.
@@ -330,13 +330,13 @@ insertComments = (fragments, options) ->
   {comments} = options
 
   findIndent = (start) ->
-    console.log 'bt start', start, fragments[start]
+    #console.log 'bt start', start, fragments[start]
     return ['', 0, true, ''] if start is 0
     m = fragments[start].code.match(/^(\s*)/)
     indent = m[1]
     postdent = ''
     for i in [start-1..0]
-      console.log 'bting', i, fragments[i]
+      #console.log 'bting', i, fragments[i]
       switch
         when m = fragments[i].code.match(/\n(\s*)$/)
           postdent += m[1]
@@ -359,7 +359,7 @@ insertComments = (fragments, options) ->
         # Consumed by code-gen - already emitted in correct place by nodes.coffee.
         return
 
-    console.log 'On Comm', comment
+    #console.log 'On Comm', comment
     {fullLine, endOfLine, locationData : cLoc} = comment
     for i in [startFragI...fragments.length]
       frag = fragments[i]
