@@ -502,6 +502,9 @@ runTests = (CoffeeScript) ->
   else
     runtime = 'inline'
 
+  # Skip modules.coffee, we don't care about modules right now.
+  files.splice files.indexOf('modules.coffee'), 1
+
   if fileVarFilter?
     files = files.filter (fname) -> fname.match(fileVarFilter)
 

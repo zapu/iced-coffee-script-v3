@@ -284,8 +284,8 @@ test "#1574: Destructuring and a parameter named _arg", ->
   arrayEq [1, 2, 3, 4], f a: 1, b: 2, 3, 4
 
 test "#1844: bound functions in nested comprehensions causing empty var statements", ->
-  a = ((=>) for a in [0] for b in [0])
-  eq 1, a.length
+  c = ((=>) for a in [0] for b in [0])
+  eq 1, c.length
 
 test "#1859: inline function bodies shouldn't modify prior postfix ifs", ->
   list = [1, 2, 3]

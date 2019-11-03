@@ -204,7 +204,7 @@ test "block comments inside class bodies", ->
   ok B.prototype.a instanceof Function
 
 test "#2037: herecomments shouldn't imply line terminators", ->
-  do (-> ### ###; fail)
+  do (-> ### ### fail)
 
 test "#2916: block comment before implicit call with implicit object", ->
   fn = (obj) -> ok obj.a
