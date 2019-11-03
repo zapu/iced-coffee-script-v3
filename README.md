@@ -32,6 +32,39 @@ Relative to Iced v2, this version stays much closer to the CoffeeScript main bod
 code, and emits much simpler code. The downside is that the target must run ES6, or
 be transpiled into ES5 with a further step not handled by this package.
 
+## **iced-types-wip** branch
+
+This branch is also testing an attempt at correctly preserving type comments, so
+Iced code can be typed using JSDoc comments and verified with TypeScript.
+
+To do that, we are also working on enabling `let` bindings instead of hoisting everything to the top of the scope and declaring using `var` keywords. This will allow the compiler to emit proper declaration with type, e.g.:
+```
+#@type{(a : number, b : number) => string}
+func = (a,b) -> "#{a} + #{b}"
+```
+compiles to:
+```
+/**@type{(a : number, b : number) => string} */
+let func = function(a,b) { return a + " + " + b }
+```
+
+Note that in order to excercise our `let` scoping, we are emitting `let`-bindings whenever possible, not just when a type comment is present. If a `let`-binding cannot be done with keeping old Coffee scoping rules, we are falling back to `var`, e.g.:
+```
+try
+  a = read()
+catch e
+  process.exit()
+console.log a
+```
+compiles to:
+```
+var a;
+try { a = read(); }
+catch (e) { process.exit(); }
+console.log(a);
+```
+(even though `a` is first assigned to in `try` block, it's used outside of it, so use `var` here)
+
 ## How to Build
 
 ```
