@@ -155,6 +155,9 @@ exports.Base = class Base
     @eachChild (node) -> tree += node.toString idt + TAB
     tree
 
+  toStringCompact : ->
+    @toString().replace(/\s(\S)/g, ' >$1').replace(/[ ]{2}/g, '-').replace(/\n/g, '')
+
   # Passes each child to a function, breaking when the function returns `false`.
   eachChild: (func) ->
     return this unless @children
@@ -502,13 +505,46 @@ exports.Block = class Block extends Base
   # `compileWithDeclarations`.
   doVariableDeclarationWalk : (scope) ->
     vmap = new Map()
-    checkVar = (name, {block, blockId, level}, assign, read) ->
+    isKill = (assignList, useList) ->
+      # If useList does not share a path with assignList, it means
+      # that the assignment will not share block scope with use.
+
+      # Example:
+
+      # Block 1 "() ->"
+      #   "bar = 5" (bar assignList=[1])
+      #   Block 2
+      #     "foo = 10" (foo assignList=[1,2])
+      #   Block 3
+      #     "print foo" (foo useList=[1,3] - kills assignment)
+      #     "bar.x()"   (bar useList[1,3] - shares path with [1], same block scope)
+
+      for assignBlk, i in assignList
+        if not useList[i] or useList[i] != assignBlk
+          return yes
+      return no
+
+    checkVar = (name, {block, blockList, crossedScope}, {assign, read}) ->
+      level = blockList.length
+      blockId = blockList[level-1]
       if cur = vmap.get(name)
-        if level < cur.level or (cur.level is level and cur.block isnt block)
+        if cur.killedBy
+          # Already dead, do not spend time in isKill
+          return
+        #console.log 'is kill?', name, cur.assignList, blockList
+        if isKill(cur.assignList, blockList)
           cur.killedBy = assign ? read
-      else if assign
-        vmap.set name, { assign, block, blockId, level }
-    @variableDeclarationWalk { level : 0, blockId : 0, scope, checkVar }
+      else if not crossedScope
+        if assign
+          # First time we are seeing this variable being assigned to.
+          # Candidate for a let-declaration, if further reads/assigns
+          # share declaration block path.
+          assignList = blockList.concat()
+          vmap.set name, { assign, block, blockId, level, assignList }
+        else
+          # Read happened before assign, block-assign is already dead.
+          vmap.set name, { killedBy : read, block, blockId, level }
+    @variableDeclarationWalk { blockList : [], level : 0, blockId : 0, scope, checkVar }
     #console.log vmap
     vmap.forEach (val) -> if not val.killedBy then val.assign.canDeclare = true
 
@@ -519,6 +555,10 @@ exports.Block = class Block extends Base
     optsThis = Object.assign {}, opts
     optsThis.level++
     optsThis.block = this
+    optsThis.blockList = optsThis.blockList.concat(opts.blockId)
+
+    #console.log 'Block::varDecWalk', optsThis.blockList
+
     super optsThis
 
   # end Iced Additions
@@ -831,8 +871,11 @@ exports.Value = class Value extends Base
   copy : -> new Value @base, @properties
 
   variableDeclarationWalk : (opts) ->
-    if @isAssignable and (v = @base.value)
-      opts.checkVar v, opts, null, this
+    #console.log 'Value::varDec', @isAssignable(), @base.value, @toStringCompact()
+    if @isAssignable() and (v = @base.value)
+      opts.checkVar v, opts, { read: this }
+    else
+      super
 
 #### Comment
 
@@ -1934,16 +1977,20 @@ exports.Assign = class Assign extends Base
     if o.level > LEVEL_TOP then @wrapInBraces answer else answer
 
   variableDeclarationWalk : (opts) ->
-    if @context or @moduleDeclaration or @param
-      return
-    varBase = @variable.unwrapAll()
-    if varBase.hasProperties?()
-      return
-    v = varBase.value
-    if v
-      # If not already declared by outer scope
-      if not opts.scope.check v
-        opts.checkVar v, opts, this
+    # Deal with checking variable first.
+    do =>
+      if @context or @moduleDeclaration or @param
+        return
+      varBase = @variable.unwrapAll()
+      if varBase.hasProperties?()
+        return
+      v = varBase.value
+      if v
+        # If not already declared by outer scope
+        if not opts.scope.check v
+          opts.checkVar v, opts, { assign : this }
+    # Now run the declaration walk on value.
+    @value.variableDeclarationWalk opts
 
 #### Code
 
@@ -2129,9 +2176,9 @@ exports.Code = class Code extends Base
     @
 
   variableDeclarationWalk: (opts) ->
-    # Stop walk if we reach Code from Block. Code creates a new
-    # scope. Walk is reinitiated for functions in Code::compileNode.
-    ;
+    # Do special kind of walk when we are crossing scope boundaries.
+    # Only do kills on reads.
+    super Object.assign { crossedScope : true }, opts
 
 
   # /IcedCoffeeScript Additions
