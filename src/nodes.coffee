@@ -1626,6 +1626,10 @@ exports.ExportDeclaration = class ExportDeclaration extends ModuleDeclaration
       code.push @makeCode 'var '
       @clause.moduleDeclaration = 'export'
 
+    # Prevent let-declaration for "export default"
+    if @ instanceof ExportDefaultDeclaration and @clause instanceof Assign
+      @clause.canDeclare = false
+
     if @clause.body? and @clause.body instanceof Block
       code = code.concat @clause.compileToFragments o, LEVEL_TOP
     else
